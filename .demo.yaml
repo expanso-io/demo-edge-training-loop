@@ -1,0 +1,7 @@
+name: Training loop in your environment
+slug: demo-edge-training-loop
+type: dashboard
+port: 8024
+entrypoint: scripts/dashboard.py
+description: "Train where the data lives: the sites collect, a local teacher grades, people approve the hard calls, and only a model that beats the last one ships back"
+created: 2026-10-02
