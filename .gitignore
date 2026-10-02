@@ -13,3 +13,11 @@ __pycache__/
 node_modules/
 .models/
 .data/
+
+# secrets, credentials and local state never leave this folder
+.secrets/
+*.creds
+*.pem
+*.key
+state/
+.DS_Store
