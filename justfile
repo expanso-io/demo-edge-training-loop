@@ -5,18 +5,24 @@ port := "8024"
 _default:
     @just --list
 
-# start the dashboard (PID in .runtime/)
+# Explicit operator commands; none are exposed by the board.
 up:
-    mkdir -p .runtime
-    nohup uv run -s scripts/dashboard.py --port {{port}} > .runtime/dashboard.log 2>&1 & echo $! > .runtime/dashboard.pid
-    @echo "dashboard on http://localhost:{{port}}"
+    uv run -s scripts/runtime.py up
+
+deploy:
+    uv run -s scripts/runtime.py deploy
 
 down:
-    -[ -f .runtime/dashboard.pid ] && kill "$(cat .runtime/dashboard.pid)" 2>/dev/null && rm .runtime/dashboard.pid
-    @echo "down"
+    uv run -s scripts/runtime.py down
 
-status:
-    @[ -f .runtime/dashboard.pid ] && ps -p "$(cat .runtime/dashboard.pid)" > /dev/null && echo "up (pid $(cat .runtime/dashboard.pid))" || echo "down"
+reset:
+    uv run -s scripts/runtime.py reset
+
+rollback:
+    uv run -s scripts/runtime.py rollback
+
+release-again:
+    uv run -s scripts/runtime.py release-again
 
 # Shared Expanso Cloud workspace. Separate workspaces require explicit flags
 # on expanso-demo-init.py so the override cannot be mistaken for the default.
@@ -27,6 +33,10 @@ workspace-check:
     @uv run -s ../_demo-kit/expanso-demo-init.py . --check
 
 test:
+    npm run lint
+    npm run typecheck
+    uv run --no-project -s tests/test_gate.py
+    uv run --no-project python -m py_compile scripts/*.py
     uv run -s scripts/dashboard.py --check
 
 video-check:
@@ -35,17 +45,17 @@ video-check:
 # Expanso pipelines: syntax, then the all-demos rules (logs, a real output,
 # short lines, no blank lines in config, generate only for timers).
 validate:
-    @command -v expanso-edge > /dev/null || { echo "skip: expanso-edge not installed"; exit 0; }
+    @command -v expanso-edge > /dev/null
     expanso-edge validate pipelines/*.yaml
 
 pipeline-check:
     @uv run -s ../_demo-kit/lint-demo-pipelines.py .
 
 # Drive the pipeline's input from outside: the demo's data source.
-produce rate="2":
-    uv run -s scripts/producer.py --rate {{rate}}
+produce count="16":
+    uv run -s scripts/producer.py --count {{count}}
 
-check: test validate pipeline-check video-check
+check: test validate pipeline-check video-check clean-check
 
 # everything that must be true before a take: gates + live endpoint + checklist
 record-check: check
@@ -53,9 +63,10 @@ record-check: check
     @echo ""
     @echo "RECORD CHECKLIST"
     @echo "  [ ] demo-guidance/RECORDING.md read; console set to light (matches this board); resolution dropped"
-    @echo "  [ ] Chrome --app, no browser chrome in frame"
+    @echo "  [ ] Opera, no browser chrome in frame"
     @echo "  [ ] true zero state confirmed (no finished session on screen)"
-    @echo "  [ ] dvv preflight --url http://localhost:{{port}} passed"
+    @echo "  [ ] manual Cloud Logs and Monitoring checks completed"
+    @echo "  [ ] RECORDING_PREFLIGHT.md warnings reviewed"
 
 # human story/proof declaration; validates only and never starts anything
 recording-preflight:

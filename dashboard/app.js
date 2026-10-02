@@ -197,6 +197,7 @@ async function poll() {
     text("teacher-status", state.records.some((record) => record.status === "grading") ? "Grading a conversation" : "Ready for the next transcript");
     text("canary", state.sites.north === "base" ? "Canary on next release" : "Canary verified");
     document.body.dataset.shipped = String(state.sites.north !== "base" && state.sites.south !== "base");
+    document.body.dataset.review = String(state.records.some((record) => record.status === "pending"));
     review(state.records);
     rounds(state.rounds);
     events(state.events);
@@ -217,6 +218,7 @@ async function poll() {
       : ["passed", "rejected"].includes(training.status) ? 100 : 0;
   } catch (error) {
     text("connection", error instanceof Error ? error.message : "Connection failed");
+    text("mode", "Status unavailable · showing last receipts");
     element("review-loading").hidden = true;
   } finally {
     setTimeout(poll, 1000);

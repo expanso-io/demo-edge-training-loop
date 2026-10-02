@@ -54,6 +54,16 @@ def put(key, value):
         db.execute('INSERT OR REPLACE INTO settings VALUES (?, ?)', (key, json.dumps(value)))
 
 
+def merge(key, updates):
+    """Merge concurrent site receipts under one SQLite write transaction."""
+    with connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        row = db.execute('SELECT value FROM settings WHERE key=?', (key,)).fetchone()
+        value = json.loads(row['value']) if row else {}
+        value.update(updates)
+        db.execute('INSERT OR REPLACE INTO settings VALUES (?, ?)', (key, json.dumps(value)))
+
+
 def event(stage, message):
     with connect() as db:
         db.execute('INSERT INTO events(at,stage,message) VALUES (?,?,?)',

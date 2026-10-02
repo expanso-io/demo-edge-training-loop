@@ -23,14 +23,15 @@ selector:
 
 def output(url):
     return f'''  output:
-    http_client:
-      url: {url}
-      verb: POST
-      headers:
-        Content-Type: application/json
-      timeout: 300s
-      retries: 10
-      retry_period: 1s
+    reject_errored:
+      http_client:
+        url: {url}
+        verb: POST
+        headers:
+          Content-Type: application/json
+        timeout: 300s
+        retries: 10
+        retry_period: 5s
 '''
 
 
@@ -66,10 +67,10 @@ text = header('teacher', 'training') + '''  input:
             Content-Type: application/json
           timeout: 240s
           retries: 10
-          retry_period: 1s
+          retry_period: 5s
       - log:
           level: INFO
-          message: 'Teacher completed id=${! this.id }'
+          message: 'Teacher result id=${! this.id } error=${! error() }'
 ''' + output('http://127.0.0.1:8025/review')
 (ROOT / 'pipelines' / 'teacher.yaml').write_text(text)
 
@@ -86,14 +87,15 @@ text = header('training-trigger', 'training') + '''  input:
           headers:
             Content-Type: application/json
           retries: 10
-          retry_period: 1s
+          retry_period: 5s
       - log:
           level: INFO
-          message: 'Training trigger status=${! this.status }'
+          message: 'Training status=${! this.status } error=${! error() }'
   output:
-    file:
-      path: /data/training-receipts.jsonl
-      codec: lines
+    reject_errored:
+      file:
+        path: /data/training-receipts.jsonl
+        codec: lines
 '''
 (ROOT / 'pipelines' / 'training-trigger.yaml').write_text(text)
 
@@ -103,7 +105,7 @@ for site, port in [('north', 8026), ('south', 8027)]:
       url: http://127.0.0.1:8025/bundle/{site}
       rate_limit: rollout_poll
       retries: 10
-      retry_period: 1s
+      retry_period: 5s
   rate_limit_resources:
     - label: rollout_poll
       local:
@@ -118,9 +120,9 @@ for site, port in [('north', 8026), ('south', 8027)]:
             Content-Type: application/json
           timeout: 120s
           retries: 10
-          retry_period: 1s
+          retry_period: 5s
       - log:
           level: INFO
-          message: 'Release check site={site} status=${{! this.status }}'
+          message: 'Release site={site} error=${{! error() }}'
 ''' + output('http://127.0.0.1:8025/receipt')
     (ROOT / 'pipelines' / f'rollout-{site}.yaml').write_text(text)

@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from corpus import HELD_OUT, POLICY, passes
 from gate import training_fingerprint
 from learning import answer, train
-from store import STATE, connect, event, get, init, put, records, snapshot
+from store import STATE, connect, event, get, init, merge, put, records, snapshot
 
 TRAIN_LOCK = threading.Lock()
 TEACHER_LOCK = threading.Lock()
@@ -128,8 +128,10 @@ def train_worker(rows, version, current):
         rounds = get('rounds')
         rounds.append(result)
         put('rounds', rounds)
+        put('trained_ids', [r['id'] for r in rows])
         put('training', {'status': result['status'], 'version': version})
     except Exception as error:
+        put('last_training_set', None)
         put('training', {'status': 'failed', 'reason': str(error)[:240]})
         event('training', 'Run failed; no release created')
     finally:
@@ -162,8 +164,9 @@ def tick(data):
     if sum(r['id'] not in consumed for r in rows) < 12:
         TRAIN_LOCK.release()
         return {'status': 'waiting for new approved batch'}
-    put('trained_ids', [r['id'] for r in rows])
-    version = 'v' + str(len(get('rounds')) + 1)
+    sequence = max(get('version_sequence') or 0, len(get('rounds'))) + 1
+    put('version_sequence', sequence)
+    version = 'v' + str(sequence)
     current = get('sites')['north']
     put('training', {'status': 'starting', 'version': version})
     event('training', 'Approved batch entered local LoRA training')
@@ -236,9 +239,8 @@ def receipt(data):
         rollback = get('rollback')
         if not rollback or data.get('from') != rollback['from'] or data['site'] not in ('north', 'south'):
             raise ValueError('Unexpected rollback receipt')
-        sites = get('sites')
-        sites[data['site']] = 'base'
-        put('sites', sites)
+        merge('sites', {data['site']: 'base'})
+        merge('site_checks', {data['site']: data})
         event('rollout', f"{data['site']} verified rollback to base")
         return {'status': 'rollback received', 'site': data['site']}
     if data['status'] != 'installed':
@@ -249,12 +251,9 @@ def receipt(data):
         raise ValueError('Receipt does not match a passing candidate')
     sites = get('sites')
     if sites[data['site']] != data['version']:
-        sites[data['site']] = data['version']
-        put('sites', sites)
+        merge('sites', {data['site']: data['version']})
         event('rollout', f"{data['site']} activated the checked adapter")
-    checks = get('site_checks') or {}
-    checks[data['site']] = data
-    put('site_checks', checks)
+    merge('site_checks', {data['site']: data})
     return {'status': 'received', 'site': data['site'], 'version': data['version']}
 
 
@@ -334,6 +333,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     init()
     if get('training')['status'] in ('starting', 'training', 'evaluating'):
+        put('last_training_set', None)
         put('training', {'status': 'failed', 'reason': 'Interrupted run; no release created'})
     with ThreadingHTTPServer(('0.0.0.0', args.port), Handler) as server:
         server.serve_forever()

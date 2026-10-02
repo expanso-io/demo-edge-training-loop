@@ -24,16 +24,17 @@ config:
             Content-Type: application/json
           timeout: 240s
           retries: 10
-          retry_period: 1s
+          retry_period: 5s
       - log:
           level: INFO
-          message: 'Teacher completed id=${! this.id }'
+          message: 'Teacher result id=${! this.id } error=${! error() }'
   output:
-    http_client:
-      url: http://127.0.0.1:8025/review
-      verb: POST
-      headers:
-        Content-Type: application/json
-      timeout: 300s
-      retries: 10
-      retry_period: 1s
+    reject_errored:
+      http_client:
+        url: http://127.0.0.1:8025/review
+        verb: POST
+        headers:
+          Content-Type: application/json
+        timeout: 300s
+        retries: 10
+        retry_period: 5s

@@ -119,7 +119,7 @@ footer { font-size: 14px; color: var(--text-dim); padding-top: 0; }
 .return-label { position: absolute; bottom: 12px; left: 24px; right: 24px; text-align: center; color: var(--accent); font-size: 14px; }
 .detail-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); border-top: 1px solid var(--line); }
 .detail-grid .gate { border-left: 1px solid var(--line); }
-body[data-shipped="true"] .detail-grid { display: none; }
+body[data-shipped="true"][data-review="false"] .detail-grid { display: none; }
 body[data-shipped="true"] .comparison { background: var(--surface); margin-top: 20px; padding: 20px 24px; border: 1px solid var(--ok); }
 @media (max-width: 1000px) {
   .loop { grid-template-columns: minmax(0, 1fr); gap: 28px; padding: 16px 16px 54px; }

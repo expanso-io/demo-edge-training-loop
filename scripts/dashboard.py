@@ -5,6 +5,11 @@
 """Local presenter proxy. This surface cannot change Cloud job lifecycle."""
 import argparse
 import json
+import threading
+import time
+import subprocess
+
+from cloud import environment
 import urllib.error
 import urllib.request
 from functools import partial
@@ -14,6 +19,22 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DASHBOARD = ROOT / 'dashboard'
 BACKEND = 'http://127.0.0.1:8025'
+CLOUD = {'checked': 0, 'mode': 'Cloud status awaiting verification'}
+
+
+def poll_cloud():
+    while True:
+        try:
+            result = subprocess.run(['expanso-cli', 'job', 'list', '--format', 'json'],
+                                    env=environment(), capture_output=True, text=True, timeout=12, check=True)
+            jobs = [job for job in json.loads(result.stdout)
+                    if job['spec']['name'].startswith('train-loop-')]
+            running = sum(job['status']['state']['state_type'].lower() == 'running' for job in jobs)
+            CLOUD.update(checked=time.time(), mode=f'Expanso Cloud: {running}/6 jobs Running')
+        except (OSError, ValueError, subprocess.SubprocessError):
+            CLOUD.update(checked=time.time(), mode='Cloud status unavailable; local receipts only')
+        time.sleep(15)
+
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -31,7 +52,10 @@ class Handler(SimpleHTTPRequestHandler):
             request = urllib.request.Request(BACKEND + path, data=payload,
                                              headers={'Content-Type': 'application/json'})
             with urllib.request.urlopen(request, timeout=10) as response:
-                self.json(200, json.load(response))
+                data = json.load(response)
+                if path == '/state':
+                    data['mode'] = CLOUD['mode'] if time.time() - CLOUD['checked'] < 30 else 'Cloud status stale; local receipts only'
+                self.json(200, data)
         except urllib.error.HTTPError as error:
             self.json(error.code, json.load(error))
         except (OSError, ValueError):
@@ -75,6 +99,7 @@ if __name__ == '__main__':
             assert (DASHBOARD / name).is_file()
         print('ok: presenter files exist; live state requires the training service')
     else:
+        threading.Thread(target=poll_cloud, daemon=True).start()
         handler = partial(Handler, directory=str(DASHBOARD))
         with ThreadingHTTPServer(('127.0.0.1', args.port), handler) as server:
             server.serve_forever()

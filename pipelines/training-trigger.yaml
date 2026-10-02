@@ -19,11 +19,12 @@ config:
           headers:
             Content-Type: application/json
           retries: 10
-          retry_period: 1s
+          retry_period: 5s
       - log:
           level: INFO
-          message: 'Training trigger status=${! this.status }'
+          message: 'Training status=${! this.status } error=${! error() }'
   output:
-    file:
-      path: /data/training-receipts.jsonl
-      codec: lines
+    reject_errored:
+      file:
+        path: /data/training-receipts.jsonl
+        codec: lines

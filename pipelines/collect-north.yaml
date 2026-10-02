@@ -18,11 +18,12 @@ config:
           level: INFO
           message: 'Transcript received id=${! this.id } site=north'
   output:
-    http_client:
-      url: http://127.0.0.1:18110/transcript
-      verb: POST
-      headers:
-        Content-Type: application/json
-      timeout: 300s
-      retries: 10
-      retry_period: 1s
+    reject_errored:
+      http_client:
+        url: http://127.0.0.1:18110/transcript
+        verb: POST
+        headers:
+          Content-Type: application/json
+        timeout: 300s
+        retries: 10
+        retry_period: 5s

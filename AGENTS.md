@@ -16,6 +16,12 @@ port the winners here → `just check`.
 - Every quantitative claim cites `docs/RESEARCH.md` or is introduced as
   representative.
 
+- Runtime commands, local-only boundaries and cleanup: `README.md` and
+  `scripts/runtime.py`. Cloud lifecycle is never exposed by the presenter.
+- Measurement scope and immutable first-run evidence: `docs/RESEARCH.md`.
+- Accepted recording warnings and manual console checks:
+  `RECORDING_PREFLIGHT.md` and `docs/EXPANSO_ISSUES.md`.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

@@ -1,108 +1,126 @@
-# Recording script — <what this demo shows>
+# Recording script
 
-One take, about 2:00 end to end, with roughly 110 seconds of speech in it. Five
-beats. Every screen state below is produced by the demo on its own clock; the
-only thing the operator does is start it.
+## The claim
 
-Copy this to `RECORDING_SCRIPT.md` in the demo root and fill it in. `just
-video-check` fails without it.
+Train where the data lives: sites collect conversations, a local teacher grades
+them, people approve the hard calls, and only an improved model ships back.
 
-## Before you roll
+## Before the take
 
-```bash
-just up      # warm-up: prove it renders and the Edge is healthy
+Read `RECORDING_PREFLIGHT.md`. Run its manual Cloud console checks. Use Opera
+at http://localhost:8024, light view, 1440 pixels wide. The mobile board also
+works at 400 pixels, but record the full loop in landscape.
+
+A full learning pass takes several minutes. Capture it honestly, then cut the
+waiting time. Never replace measured progress with a sped-up counter.
+
+For a clean opening, run these commands from the permanent demo folder:
+
+```sh
 just down
+just reset
+just up
+just deploy
+just record-check
 ```
 
-Do the warm-up. The first `uv run` of a session resolves dependencies and the
-first Edge start builds its data directory. Neither belongs in a take.
+Confirm zero transcripts, both sites on base, no gate decision, and six jobs
+Running. Keep the terminal outside the capture area.
 
-Then run the environment preflight — Chrome in `--app` mode, display scaled
-down, Cloud console matched to the demo's declared theme, notifications off:
+## Beat 1: the boundary
 
-```bash
-~/.claude/skills/demo-video-verify/scripts/dvv preflight --url <DEMO_URL>
+Say: “These agent sites run inside the customer's infrastructure. Their text
+conversations go to a training node in the same environment. Expanso Cloud
+manages the work; the conversations stay here.”
+
+Point at the customer boundary, two sites and local training node. The teacher
+is `mistral-small:24b`; the student is a pinned 135M-parameter instruct model.
+The exercise is text-only; no telephony or audio is captured.
+
+## Beat 2: collect, grade, review
+
+```sh
+just produce 1
 ```
 
-Recording surface: `<DEMO_URL>` full screen.
+The external producer asks the actual North model a refund question and sends
+its answer through Expanso. Watch the transcript and teacher counts change.
+Read the teacher's confidence, rationale and correction. Fix the sentence if
+needed, then click **Approve for training**.
 
-**Timing.** Offsets are seconds after `<the anchor event>`. The driver waits for
-that anchor rather than guessing, so a slipped take runs longer but never
-desynchronises.
+Say: “The larger local model checks the answer and proposes a correction.
+Uncertain cases pause for a person. A confidence score is a review signal,
+not proof that the teacher is right.”
 
-**Pace.** The spoken text below is ~280 words. Beat spacing assumes a brisk 155
-words a minute. Slow down and the beats arrive before you do.
+Within the next scheduled trigger, point at the rejected minimum-data round:
+“One approved conversation is not enough. Nothing ships.”
 
----
+## Beat 3: the approved batch
 
-## Beat 1 — <NAME> · 0:00–0:15
-
-**Screen state before you speak.** <What must be true on screen.>
-
-**Driver** — <command, or "nothing to type">
-
-> <The contradiction. Not a preamble — state the problem as something that
-> cannot be true, or state the conclusion. Never "So one thing we get a lot of
-> questions about is…">
-
----
-
-## Beat 2 — <NAME> · 0:15–0:40
-
-**Screen state before you speak.** <...>
-
-> <One sentence per idea. Name the pain before the feature.>
-
----
-
-## Beat 3 — <NAME> · 0:40–1:05
-
-**Screen state before you speak.** <The failure mode firing — link drop,
-bad reading quarantined, threshold crossed. Something going wrong on purpose is
-the most persuasive thing in any demo.>
-
-> <...>
-
----
-
-## Beat 4 — <NAME> · 1:05–1:30
-
-**Screen state before you speak.** <The payoff, with the headline number
-rendered.>
-
-> <**Say the number out loud, slowly, then stop talking for a beat.** Every
-> figure rendered on screen must be spoken. If it isn't worth saying, don't
-> render it.>
-
----
-
-## Beat 5 — CLOSE · 1:30–2:00
-
-**Screen state before you speak.** <Final state, number still visible.>
-
-> <The closing line. Write it here and say it verbatim — it is the sentence
-> people repeat.>
-
----
-
-## Required lines
-
-Anything listed here must appear in the take. `demo-video-verify` checks the
-transcript against them.
-
-- "<the headline number, spoken>"
-- "<the closing line>"
-
-## Prohibited
-
-Never spoken or shown: [B]acalhau, program names, classification-adjacent claims,
-third-party vendor names. Every quantitative claim either cites a public source
-in `docs/RESEARCH.md` or is introduced as representative.
-
-## After the take
-
-```bash
-~/.claude/skills/demo-video-verify/scripts/dvv verify <VIDEO> --script RECORDING_SCRIPT.md
+```sh
+just produce
 ```
 
-Non-zero exit means it is not publishable yet.
+The already-graded first record is idempotent; the remaining requests run at
+the two sites. The board queues corrections below 0.98 confidence, and targets
+that fail the narrow policy check also require review. Review them carefully.
+For refunds, request the order number before checking eligibility. For booking
+changes, request the booking reference before checking availability. Never
+approve a sentence claiming the action already happened.
+
+The scheduled trigger starts once at least 12 approved records are available.
+For a full 16-record training set, wait until all records arrive, then approve
+the remaining queue promptly. The actual set and result are recorded; a pass is
+never forced. If a candidate fails, show that rejection and retain the current
+site model. Reset and review the corrections before attempting another take.
+
+## Beat 4: training and the gate
+
+Say: “This container fine-tunes the small model here. These are completed
+training steps. Then we compare the candidate with the current model on eight
+requests that were held out of training.”
+
+Keep the progress and gate visible. Explain the actual score shown. The first
+verified pass took 159.2 seconds and improved from 0/8 to 8/8; a fresh take may
+differ. These eight lexical policy checks are deliberately narrow. Do not call
+them a general safety or quality benchmark.
+
+## Beat 5: release and the answer
+
+On a passing gate, watch North accept the adapter before South. Expanso carries
+the adapter bytes. Each site verifies the checksum and runs a local inference
+check before acknowledging activation. The before/after panel moves forward
+when both site versions change.
+
+Say: “The same held-out request now gets a better answer. North went first;
+South followed after North's local check. A failed gate would leave both on
+the current version.”
+
+Read the actual answers rather than promising a particular sentence. The
+side-by-side panel shows held-out evaluation outputs; the retained site receipt
+also contains the actual post-install inference answer.
+
+## Beat 6: rollback
+
+```sh
+just rollback
+```
+
+Watch both versions return to base, then:
+
+```sh
+just release-again
+```
+
+Watch the same accepted adapter return canary-first. Say: “The accepted version
+is retained, and this first release can roll back to the original model.”
+
+## End the session
+
+```sh
+just down
+ollama stop mistral-small:24b
+```
+
+Close only this task's Opera session. Confirm the owned localhost listeners
+and containers are gone. Do not stop the pre-existing Ollama server.

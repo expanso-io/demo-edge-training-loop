@@ -7,6 +7,7 @@ import argparse
 import json
 import time
 import urllib.request
+import urllib.error
 
 from corpus import TRAIN
 
@@ -14,9 +15,15 @@ from corpus import TRAIN
 def post(url, payload):
     request = urllib.request.Request(url, data=json.dumps(payload).encode(),
                                      headers={'Content-Type': 'application/json'})
-    with urllib.request.urlopen(request, timeout=360) as response:
-        body = response.read()
-        return json.loads(body) if body else None
+    for attempt in range(12):
+        try:
+            with urllib.request.urlopen(request, timeout=360) as response:
+                body = response.read()
+                return json.loads(body) if body else None
+        except urllib.error.HTTPError as error:
+            if error.code not in (429, 502, 503, 504) or attempt == 11:
+                raise
+            time.sleep(5)
 
 
 def main():

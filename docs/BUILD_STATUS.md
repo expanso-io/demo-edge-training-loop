@@ -1,78 +1,66 @@
-# Build checkpoint · 2026-10-02
+# Verified delivery · 2026-10-02
 
-This checkpoint was prepared on `main` in the permanent demo folder. The disposable
-worktree and its branch are unused. This is not recording-ready yet.
+Built in the permanent demo folder on main. First checkpoint: `5b92c14`.
+The disposable worktree is unused. There is no remote and nothing was pushed.
 
-## Verified
+## Proven loop
 
-- The installed local teacher graded actual small-model answers.
-- Six Cloud jobs ran with project-specific selectors. No unrelated executions
-  appeared on the three new node identities when checked before deployment.
-- The North and South inference services and CPU LoRA trainer ran in Docker.
-  The training Edge agent ran in a sidecar sharing the training container's
-  network namespace. Site Edge agents ran on the Mac.
-- The first approved record was rejected by the minimum-data gate.
-- Seventeen approved records trained the pinned 135M instruct model with LoRA.
-  The run took 159.2 seconds. The fixed eight-request lexical policy check
-  improved from zero passes to eight. This narrow rubric is not a production
-  safety assessment. One teacher target needed reviewer correction.
-- Cloud pipelines transported the actual adapter bytes. North acknowledged
-  activation before South. Both acknowledged rollback to base, then accepted
-  the passing adapter again.
-- `docs/evidence/first-pass.json` and `rollout-and-rollback.json` retain the
-  evidence. Screenshots in `docs/screenshots/` show the early review and the
-  revised loop. The last 1440 and 400 captures are `checkpoint-*.png`.
-- Before the final diagram refinement, overflow checks passed at 320, 400,
-  768 and 1440. Repeat those checks against the final layout.
-- At this checkpoint: anti-slop lint, JS typecheck, five gate tests, Python
-  compilation, pipeline validation, pipeline lint, video-strict UI lint, and
-  the existing `just check` all passed.
+- Six Cloud-managed jobs use project selectors across North, South and the
+  container training node. Only demo executions were seen on those nodes.
+- Real small-model answers travelled through Expanso to the local
+  `mistral-small:24b` teacher. Low-confidence corrections paused for approval.
+- The first undersized batch was honestly rejected. The first full run trained
+  the pinned 135M student on 17 approved records in 159.2 seconds. Its fixed
+  eight-request lexical rubric improved from 0/8 to 8/8 without regression.
+- Expanso transported the actual adapter. North acknowledged local inference
+  before South. Both rolled back to base, then accepted the adapter again.
+- Hardened outputs reject processing errors and use five-second retries. A
+  fresh transcript and another rollback/re-release passed through those jobs.
+- The final reset/start/deploy workflow was exercised: zero records/rounds,
+  both sites base, then a real 90%-confidence teacher item, on-screen approval,
+  and a fresh minimum-data rejection. Previous run state remains archived.
 
-## Observability limitation resolved by firstmate
+## Verification
 
-Cloud log verification failed twice. Installed `expanso-cli job logs`
-returned `websocket: bad handshake`. A request to the documented POST
-`/api/v1/jobs/train-loop-rollout-north/logs` returned HTTP 404. The latter
-route is from the local Expanso documentation snapshot. The worker contract
-requires stopping after two attempts at an obstacle.
+`just record-check` and `just recording-preflight` passed. The former includes
+central anti-slop lint, TypeScript checking, five gate tests, Python compilation,
+Expanso YAML validation, pipeline lint, video-strict UI lint and name checks.
+The unchanged machine commit hook passed the first checkpoint; no plugin copy
+is vendored. Reset, startup, deployment, rollback, re-release and shutdown were
+exercised via the operator commands.
 
-Firstmate accepted a signed-in console verification as a manual recording
-preflight on 2026-10-02 (inbox 003). This no longer blocks implementation. Running jobs and local receipts do not prove Cloud charts or logs.
-No authenticated Cloud browser session was used.
+The final board has no horizontal overflow at 320/400/768/1440. Font loading,
+remembered dark view and reduced motion were verified with isolated Opera via
+agent-browser. Desktop and mobile renders were inspected against the design
+checklist. Motion follows measured events; loading has a skeleton; this local
+presenter needs no invented public legal pages. The diagram's event particles
+are the explicitly requested motion, not decorative animated arrows.
 
-## Remaining implementation and verification
+Screenshots: `final-1440.png` and `final-400.png` show the passing retained run;
+`zero-1440.png`, `review-1440.png`, `review-400.png` and `rejected-1440.png` show
+the fresh opening sequence. All are under `docs/screenshots/`. The JSON evidence
+under `docs/evidence/` preserves both sequences and actual answers.
 
-- Complete the runtime command surface. `runtime.py edges` and `stop` exist;
-  the scaffold `just up` still starts only the board. Do not present it as the
-  complete demo start command. Docker service launch commands were run by the
-  worker and still need a reusable start recipe with readiness checks.
-- Wire the added lint/typecheck/gate tests into `just check`; they currently
-  ran as separate commands. Complete README, RECORDING_SCRIPT and preflight.
-- Node config now enables telemetry. The verified first pass used
-  `do_not_track: true`; the change to false needs a live restart and Cloud
-  monitoring verification. Do not claim traffic charts were verified.
-- Add fail-closed `reject_errored` outputs and conditional success/error logs
-  around HTTP processors. The components were read in the official local
-  documentation but this hardening has not yet been implemented.
-- Make the board's Cloud status fresh. Its current mode string was set after
-  reading Running jobs and is persisted, not a live status poll.
-- Verify the final loop layout, all state transitions, theme persistence,
-  reduced motion, unavailable-service behavior and model-call rate caps.
-  Approval calls no model; its button is single-flight. Backend model routes
-  now have nonblocking admission limits, but need explicit concurrency tests.
-- Rollback currently restores the base model, appropriate to the first
-  release shown here. General previous-version rollback is not implemented.
-- Add restart recovery for interrupted training and a durable release-attempt
-  audit. Harden retry/idempotency checks before calling the demo ready.
-- Model dependencies and the model revision are pinned. The Edge sidecar is
-  still the existing `nightly` image; pin its inspected digest before delivery.
-- Review the final diff, rerun complete gates, and commit on permanent main.
-  There is no remote and no push is authorized for this task.
+## Accepted limitations
 
-## Cleanup
+The eight checks are a narrow policy exercise, not production safety or general
+quality measurement. Teacher confidence is self-reported. Rollback restores the
+base model for this first-release demonstration.
 
-All six demo Cloud jobs were stopped. The four task containers were stopped
-and removed. The two native Edge processes and localhost board were stopped.
-The task's Opera session was closed, the teacher model unloaded, and Docker
-Desktop stopped. Persisted adapters, data, node identities and owner-only
-project credentials remain gitignored in the permanent project.
+Cloud console Logs/Monitoring remain a manual pre-take check. CLI Logs reports
+`websocket: bad handshake`; both tested training Edge versions NACK resource
+metrics. Firstmate accepted these warnings in inbox 003 and 006. The exact
+errors, versions, repro steps and console navigation are in
+`EXPANSO_ISSUES.md`; the recording declaration is `../RECORDING_PREFLIGHT.md`.
+No Cloud chart or signed-in console log stream is claimed as verified.
+
+## Cleanup and next take
+
+All six Cloud jobs, four containers, two native Edge agents and the board are
+stopped at handoff. The owned Opera session is closed, the teacher unloaded,
+and Docker Desktop stopped. The pre-existing Ollama server remains untouched.
+Local credentials, node identities, cached weights and archived runs remain
+owner-only and gitignored.
+
+Use `../README.md` for commands and `../RECORDING_SCRIPT.md` for the take. Start
+with reset after down to preserve the review exercise and open on a true zero.
