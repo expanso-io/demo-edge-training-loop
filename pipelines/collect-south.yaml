@@ -1,0 +1,28 @@
+name: train-loop-collect-south
+description: Local conversation learning - collect-south
+type: pipeline
+selector:
+  match_labels:
+    demo: demo-edge-training-loop
+    role: site
+    site: south
+config:
+  input:
+    http_server:
+      address: 127.0.0.1:18102
+      path: /transcript
+      timeout: 300s
+  pipeline:
+    processors:
+      - log:
+          level: INFO
+          message: 'Transcript received id=${! this.id } site=south'
+  output:
+    http_client:
+      url: http://127.0.0.1:18110/transcript
+      verb: POST
+      headers:
+        Content-Type: application/json
+      timeout: 300s
+      retries: 10
+      retry_period: 1s

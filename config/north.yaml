@@ -1,0 +1,7 @@
+name: train-loop-north
+labels:
+  demo: demo-edge-training-loop
+  role: site
+  site: north
+telemetry:
+  do_not_track: false

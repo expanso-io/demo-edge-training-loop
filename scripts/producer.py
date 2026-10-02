@@ -1,45 +1,40 @@
-#!/usr/bin/env -S uv run -s
 # /// script
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""The demo's data source, driven from outside the pipeline.
-
-    uv run -s scripts/producer.py --rate 2           # records per second
-    uv run -s scripts/producer.py --rate 5 --count 50
-
-Posts JSON records to the pipeline's http_server input. Replace the record
-body with the demo's real data (files, sensor frames, log lines) and keep it
-external: the pipeline should never generate the data it processes.
-"""
-
-from __future__ import annotations
-
+"""External conversation producer: inference, then a real Expanso input."""
 import argparse
 import json
-import os
 import time
 import urllib.request
 
-URL = os.environ.get("DEMO_INGEST_URL", "http://127.0.0.1:18100/ingest")
+from corpus import TRAIN
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--rate", type=float, default=2.0)
-    ap.add_argument("--count", type=int, default=0, help="0 = until stopped")
-    args = ap.parse_args()
-    seq = 0
-    while not args.count or seq < args.count:
-        seq += 1
-        body = json.dumps({"seq": seq, "source": "producer", "ts": time.time()}).encode()
-        req = urllib.request.Request(URL, data=body, method="POST")
-        req.add_header("Content-Type", "application/json")
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            resp.read()
-        time.sleep(1 / args.rate)
-    return 0
+def post(url, payload):
+    request = urllib.request.Request(url, data=json.dumps(payload).encode(),
+                                     headers={'Content-Type': 'application/json'})
+    with urllib.request.urlopen(request, timeout=360) as response:
+        body = response.read()
+        return json.loads(body) if body else None
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--count', type=int, default=len(TRAIN))
+    parser.add_argument('--run', default='recording')
+    args = parser.parse_args()
+    if not 1 <= args.count <= len(TRAIN):
+        parser.error(f'count must be 1 to {len(TRAIN)}')
+    for index, (kind, prompt) in enumerate(TRAIN[:args.count]):
+        site = 'north' if index % 2 == 0 else 'south'
+        model_port = 8026 if site == 'north' else 8027
+        pipeline_port = 18101 if site == 'north' else 18102
+        record = post(f'http://127.0.0.1:{model_port}/infer', {
+            'id': f'{args.run}-{index + 1:02}', 'kind': kind, 'prompt': prompt})
+        post(f'http://127.0.0.1:{pipeline_port}/transcript', record)
+        print(f"received {record['id']} from {site}", flush=True)
+
+
+if __name__ == '__main__':
+    main()

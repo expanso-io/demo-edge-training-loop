@@ -1,0 +1,42 @@
+name: train-loop-rollout-south
+description: Local conversation learning - rollout-south
+type: pipeline
+selector:
+  match_labels:
+    demo: demo-edge-training-loop
+    role: site
+    site: south
+config:
+  input:
+    http_client:
+      url: http://127.0.0.1:8025/bundle/south
+      rate_limit: rollout_poll
+      retries: 10
+      retry_period: 1s
+  rate_limit_resources:
+    - label: rollout_poll
+      local:
+        count: 1
+        interval: 5s
+  pipeline:
+    processors:
+      - http:
+          url: http://127.0.0.1:8027/install
+          verb: POST
+          headers:
+            Content-Type: application/json
+          timeout: 120s
+          retries: 10
+          retry_period: 1s
+      - log:
+          level: INFO
+          message: 'Release check site=south status=${! this.status }'
+  output:
+    http_client:
+      url: http://127.0.0.1:8025/receipt
+      verb: POST
+      headers:
+        Content-Type: application/json
+      timeout: 300s
+      retries: 10
+      retry_period: 1s

@@ -1,0 +1,6 @@
+name: train-loop-training
+labels:
+  demo: demo-edge-training-loop
+  role: training
+telemetry:
+  do_not_track: false

@@ -1,0 +1,29 @@
+name: train-loop-training-trigger
+description: Local conversation learning - training-trigger
+type: pipeline
+selector:
+  match_labels:
+    demo: demo-edge-training-loop
+    role: training
+config:
+  input:
+    # Timer only. Conversation data enters through the site inputs.
+    generate:
+      interval: 10s
+      mapping: 'root = {"trigger": "schedule"}'
+  pipeline:
+    processors:
+      - http:
+          url: http://127.0.0.1:8025/tick
+          verb: POST
+          headers:
+            Content-Type: application/json
+          retries: 10
+          retry_period: 1s
+      - log:
+          level: INFO
+          message: 'Training trigger status=${! this.status }'
+  output:
+    file:
+      path: /data/training-receipts.jsonl
+      codec: lines

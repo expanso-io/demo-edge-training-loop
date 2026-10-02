@@ -1,0 +1,12 @@
+{
+  "name": "demo-edge-training-loop",
+  "private": true,
+  "scripts": {
+    "lint": "/Users/daaronch/code/second-brain/projects/anti-slop/check dashboard/app.js dashboard/contracts.d.ts showcase/app.js showcase/contracts.d.ts",
+    "typecheck": "tsc --allowJs --checkJs --noEmit --lib ES2023,DOM dashboard/app.js"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  },
+  "type": "module"
+}
