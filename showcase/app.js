@@ -256,7 +256,7 @@ let lastTraining = "idle";
 let lastFrame = performance.now();
 
 function live() {
-  return connected && (S?.cloud.running ?? 1) > 0;
+  return connected && (S?.cloud?.running ?? 1) > 0;
 }
 
 /** @param {number} now */
@@ -285,7 +285,7 @@ function frame(now) {
     emit("ret", "ret", shipped ? RATE.shipped : 0, COLOR.ok, dt, { speed: SPEED.ret, size: 3 });
   }
 
-  if ((S?.cloud.running ?? 0) > 0) {
+  if ((S?.cloud?.running ?? 0) > 0) {
     emit("ctlDown", "ctlDown", RATE.ctlDown, COLOR.ctl, dt, { speed: SPEED.ctl, size: 2.4, trail: false });
     emit("ctlUp", "ctlUp", RATE.ctlUp, COLOR.ctl, dt, { speed: SPEED.ctl, size: 2.4, trail: false });
   }
@@ -515,7 +515,9 @@ function render(state) {
   element("return-label").dataset.state = state.sites.north === "base" ? "off" : "on";
   document.body.dataset.shipped = String(shipped);
 
-  const cloud = state.cloud;
+  // A presenter started before this field existed reports no Cloud counts; the
+  // board then runs on local receipts alone instead of crashing the render.
+  const cloud = state.cloud ?? { running: 0, total: 0 };
 
   text("cloud-jobs", cloud.total ? `jobs · ${cloud.running}/${cloud.total} running` : "jobs · status unavailable");
   pill("pill-cloud", !cloud.total ? "off" : cloud.running === cloud.total ? "on" : cloud.running ? "warn" : "err");
