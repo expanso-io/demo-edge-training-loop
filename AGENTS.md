@@ -5,13 +5,15 @@ them. Build order: claim → beat script → components on the showcase →
 port the winners here → `just check`.
 
 - The claim: **Train where the data lives: the sites collect, a local teacher grades, people approve the hard calls, and only a model that beats the last one ships back** — every element on screen serves it or gets cut.
-- Palette: **dark** (declared as `color-scheme` in `dashboard/styles.css`);
-  re-chosen on 2026-10-02 to match the Space Force reference: the board is
-  a standalone ops instrument, not an embedded light host. Neither dark nor light is the default — palette
-  follows the subject and the host it lives in (`../AGENTS.md` → Theme). If
-  this demo should be the other one, re-stamp with `--palette` rather than
-  hand-flipping colours; the linter checks the ground agrees with the
-  declaration.
+- Palette: **light**, warm (declared as `color-scheme` in `dashboard/styles.css`);
+  chosen on 2026-10-03 from the subject: conversations read by a person are a
+  transcript on a desk, so the ground is linen and the spoken words are a
+  vendored serif. The previous dark board was Space Force with the labels
+  swapped and was rejected for it. Take a reference board's *behaviour* (drawn
+  scenario, one colour per meaning, instruments, click-to-inspect), never its
+  palette or glyphs (`../AGENTS.md` → Theme). If this demo should be the other
+  one, re-stamp with `--palette` rather than hand-flipping colours; the linter
+  checks the ground agrees with the declaration.
 - Design language: `../_demo-kit/DESIGN_SYSTEM.md`. Re-hue the tokens for this
   subject; keep the token names.
 - Every quantitative claim cites `docs/RESEARCH.md` or is introduced as

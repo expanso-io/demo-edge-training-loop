@@ -8,7 +8,8 @@ them, people approve the hard calls, and only an improved model ships back.
 ## Before the take
 
 Read `RECORDING_PREFLIGHT.md`. Run its manual Cloud console checks. Use Opera
-at http://localhost:8024, dark view, 1440 pixels wide. The mobile board also
+at http://localhost:8024, light view, 1440 pixels wide. Set the Expanso
+Cloud console to light to match the board. The mobile board also
 works at 400 pixels, but record the full loop in landscape.
 
 A full learning pass takes several minutes. Capture it honestly, then cut the
@@ -35,7 +36,7 @@ manages the work; the conversations stay here.”
 
 Point at the dashed customer boundary with the two sites and the Expanso Edge
 training node inside it, and Expanso Cloud outside it with only the control
-lane crossing. The site lanes are already streaming: customers keep talking. The teacher
+lane crossing. The site lanes are already streaming terracotta: customers keep talking. The teacher
 is `mistral-small:24b`; the student is a pinned 135M-parameter instruct model.
 The exercise is text-only; no telephony or audio is captured.
 
@@ -47,7 +48,9 @@ just produce 1
 
 The external producer asks the actual North model a refund question and sends
 its answer through Expanso. Watch the burst on the north lane, then the transcript and teacher counts
-change and the flow reach the REVIEW stage.
+change and the flow reach the REVIEW stage. Click the new row under
+*Conversations received* to open the whole transcript, then click again to
+close it.
 Read the teacher's confidence, rationale and correction. Fix the sentence if
 needed, then click **Approve for training**.
 

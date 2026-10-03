@@ -19,50 +19,57 @@
   <output id="state-badge" data-state="down">STANDBY</output>
 </header>
 
+<!-- Click-open inspector, centred in the viewport: a whole conversation, a
+     line's last conversation, or a round's held-out answers. -->
+<div class="popup" id="popup" aria-hidden="true" data-open="false">
+  <div class="popup-hint"><span id="popup-title">CONVERSATION</span><span>click or esc to close</span></div>
+  <div class="popup-body" id="popup-body"></div>
+</div>
+
 <main>
   <!-- The stage. DOM owns the cards so text stays crisp; the flow canvas
        overlays the whole stage and owns only the particles, anchored to
-       seats, stage rows and card walls. -->
+       lines, stage rows and card walls. -->
   <section class="stage" id="stage">
     <canvas id="flow" aria-hidden="true"></canvas>
     <div class="boundary" id="boundary" aria-hidden="true"><span>CUSTOMER ENVIRONMENT &middot; CONVERSATIONS AND MODELS STAY HERE</span></div>
 
     <div class="sites-col">
-      <div class="col-head"><span class="kicker">AGENT SITES</span><span class="col-sub">customers write in</span></div>
+      <div class="col-head"><span class="kicker">ASSISTANT SITES</span><span class="col-sub">customers write in</span></div>
 
       <div class="card site" id="site-north" data-site="north" data-version="base">
         <div class="site-head">
-          <div><span class="kicker">SITE &middot; NORTH</span><h2>North support floor</h2></div>
-          <span class="version"><svg class="icon" aria-hidden="true"><use href="icons.svg#package"/></svg><b id="north-version">base</b></span>
+          <div><span class="kicker">SITE &middot; NORTH</span><h2>North assistants</h2></div>
+          <span class="version"><svg class="icon" aria-hidden="true"><use href="icons.svg#layers"/></svg><b id="north-version">base</b></span>
         </div>
-        <div class="floor" id="floor-north">
-          <div class="seat" data-seat="0"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-1</span></div>
-          <div class="seat" data-seat="1"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-2</span></div>
-          <div class="seat" data-seat="2"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-3</span></div>
-          <div class="seat" data-seat="3"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-4</span></div>
+        <div class="floor" id="floor-north" aria-label="North conversation lines">
+          <div class="seat" data-seat="0" role="button" tabindex="0"><span class="turns" aria-hidden="true"><i></i><i></i></span><span>line 1</span></div>
+          <div class="seat" data-seat="1" role="button" tabindex="0"><span class="turns" aria-hidden="true"><i></i><i></i></span><span>line 2</span></div>
+          <div class="seat" data-seat="2" role="button" tabindex="0"><span class="turns" aria-hidden="true"><i></i><i></i></span><span>line 3</span></div>
+          <div class="seat" data-seat="3" role="button" tabindex="0"><span class="turns" aria-hidden="true"><i></i><i></i></span><span>line 4</span></div>
         </div>
         <div class="site-nums">
           <div><b id="north-count">0</b><small>CONVERSATIONS</small></div>
           <div class="kinds" id="north-kinds"><i data-kind="refund"><b></b></i><i data-kind="booking"><b></b></i><small>refunds &middot; bookings</small></div>
-          <div class="last" id="north-last">awaiting the first customer</div>
+          <div class="last" id="north-last" role="button" tabindex="0">awaiting the first customer</div>
         </div>
       </div>
 
       <div class="card site" id="site-south" data-site="south" data-version="base">
         <div class="site-head">
-          <div><span class="kicker">SITE &middot; SOUTH</span><h2>South support floor</h2></div>
-          <span class="version"><svg class="icon" aria-hidden="true"><use href="icons.svg#package"/></svg><b id="south-version">base</b></span>
+          <div><span class="kicker">SITE &middot; SOUTH</span><h2>South assistants</h2></div>
+          <span class="version"><svg class="icon" aria-hidden="true"><use href="icons.svg#layers"/></svg><b id="south-version">base</b></span>
         </div>
-        <div class="floor" id="floor-south">
-          <div class="seat" data-seat="0"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-1</span></div>
-          <div class="seat" data-seat="1"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-2</span></div>
-          <div class="seat" data-seat="2"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-3</span></div>
-          <div class="seat" data-seat="3"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-4</span></div>
+        <div class="floor" id="floor-south" aria-label="South conversation lines">
+          <div class="seat" data-seat="0" role="button" tabindex="0"><span class="turns" aria-hidden="true"><i></i><i></i></span><span>line 1</span></div>
+          <div class="seat" data-seat="1" role="button" tabindex="0"><span class="turns" aria-hidden="true"><i></i><i></i></span><span>line 2</span></div>
+          <div class="seat" data-seat="2" role="button" tabindex="0"><span class="turns" aria-hidden="true"><i></i><i></i></span><span>line 3</span></div>
+          <div class="seat" data-seat="3" role="button" tabindex="0"><span class="turns" aria-hidden="true"><i></i><i></i></span><span>line 4</span></div>
         </div>
         <div class="site-nums">
           <div><b id="south-count">0</b><small>CONVERSATIONS</small></div>
           <div class="kinds" id="south-kinds"><i data-kind="refund"><b></b></i><i data-kind="booking"><b></b></i><small>refunds &middot; bookings</small></div>
-          <div class="last" id="south-last">awaiting the first customer</div>
+          <div class="last" id="south-last" role="button" tabindex="0">awaiting the first customer</div>
         </div>
       </div>
     </div>
@@ -85,28 +92,28 @@
 
         <div class="stages">
           <div class="row" id="stage-teacher" data-live="false">
-            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#search"/></svg></span>
+            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#rubric"/></svg></span>
             <div class="what"><span class="kicker">TEACHER</span><h3>grades every answer</h3><p class="meta">mistral-small 24B &middot; proposes a correction</p></div>
             <div class="num"><b id="graded">0</b><small>GRADED</small></div>
             <div class="bars split" id="teacher-split" aria-label="Teacher verdicts"><div class="track"><i data-part="pass"></i><i data-part="person"></i><i data-part="grading"></i></div><span id="teacher-split-label">&mdash;</span></div>
           </div>
 
           <div class="row" id="stage-review" data-live="false">
-            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#users"/></svg></span>
+            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#headset"/></svg></span>
             <div class="what"><span class="kicker">HUMAN CHECK</span><h3>pauses uncertain calls</h3><p class="meta">under 0.98 confidence, or a policy miss</p></div>
             <div class="num warn"><b id="review-count">0</b><small>WAITING</small></div>
             <div class="bars queue" id="queue" aria-label="Approved for training"><span id="approved-label">0 approved for training</span></div>
           </div>
 
           <div class="row" id="stage-train" data-live="false">
-            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#bolt"/></svg></span>
+            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#layers"/></svg></span>
             <div class="what"><span class="kicker">LoRA TRAIN</span><h3>fine-tunes the 135M student</h3><p class="meta" id="train-meta">needs 12 approved conversations to start</p></div>
             <div class="num"><b id="train-step">&ndash;</b><small id="train-label">STEPS</small></div>
             <div class="bars progress" aria-label="Training progress"><i><b id="train-bar"></b></i><span id="train-pct">idle</span></div>
           </div>
 
           <div class="row" id="stage-gate" data-live="false" data-result="">
-            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#check-circle"/></svg></span>
+            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#gate"/></svg></span>
             <div class="what"><span class="kicker">GATE</span><h3>8 held-out requests</h3><p class="meta" id="gate-meta">ships only if it beats the current model</p></div>
             <div class="num"><b id="gate-score">&ndash;</b><small id="gate-label">GATE</small></div>
             <div class="bars checks" aria-label="Held-out policy checks">
@@ -135,10 +142,10 @@
 
       <div class="card answers" id="comparison">
         <span class="kicker">SAME HELD-OUT REQUEST</span>
-        <p class="prompt" id="eval-prompt">answers appear after the first gate</p>
+        <p class="prompt said" id="eval-prompt">answers appear after the first gate</p>
         <div class="pair">
-          <section><h4 id="before-title">CURRENT</h4><p id="before" class="old">&ndash;</p></section>
-          <section><h4 id="after-title">CANDIDATE</h4><p id="after">&ndash;</p></section>
+          <section><h4 id="before-title">CURRENT</h4><p id="before" class="old said">&ndash;</p></section>
+          <section><h4 id="after-title">CANDIDATE</h4><p id="after" class="said">&ndash;</p></section>
         </div>
       </div>
     </div>
@@ -146,7 +153,7 @@
 
   <section class="panels">
     <div class="panel transcripts">
-      <header class="panel-head"><h3>Conversations received</h3><span class="hint">hover a row to read it whole</span></header>
+      <header class="panel-head"><h3>Conversations received</h3><span class="hint" id="feed-hint">click a conversation to read it whole</span></header>
       <ol class="feed" id="feed" tabindex="0"><li class="empty">awaiting the first transcript &middot; the sites keep answering customers either way</li></ol>
     </div>
 
@@ -158,7 +165,7 @@
         <div class="review-meta"><code id="review-id"></code><span class="pill" id="confidence" data-state="warn"></span></div>
         <dl>
           <dt>customer</dt><dd class="quote" id="prompt"></dd>
-          <dt>current answer</dt><dd class="quote old" id="answer"></dd>
+          <dt>assistant</dt><dd class="quote old" id="answer"></dd>
           <dt>teacher</dt><dd class="rationale" id="rationale"></dd>
         </dl>
         <label for="target">correction &middot; edit if needed</label>

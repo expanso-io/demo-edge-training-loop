@@ -1,12 +1,12 @@
 /* Local learning loop — live board.
  *
- * Nothing drawn is invented. Customers write in at every seat of both support
- * floors continuously (representative; the counts beside them are measured);
+ * Nothing drawn is invented. Customers write in at every line of both assistant
+ * sites continuously (representative; the counts beside them are measured);
  * each measured receipt adds a burst on its own site's lane. Inside the
  * training node a spine carries what the counts say is there: graded
  * conversations to the person, approved ones to training while a batch is
  * waiting, steps to the gate while a run is live. A pass sends the adapter
- * through the release column and back to the floors, north first; a
+ * through the release column and back to the sites, north first; a
  * rejection dies at the gate. Expanso Cloud sits outside the customer
  * boundary and only its control heartbeat crosses the line.
  */
@@ -34,15 +34,17 @@ const RATE = {
 
 const SPEED = { customer: 1.1, seat: 0.38, spine: 0.7, gate: 0.6, ret: 0.45, ctl: 0.4 };
 
-const COLOR = { conv: "#58c7ff", ok: "#7ff0b0", err: "#ff8c8c", ctl: "#9fb6ff" };
+/* Terracotta is a conversation, teal is approved or shipped, red is held at
+ * the gate, violet is Expanso Cloud: the same four meanings as styles.css. */
+const COLOR = { conv: "#b8472a", ok: "#0f7a63", err: "#b3261e", ctl: "#6743cf" };
 
-const BLUE = "88, 199, 255";
+const CONV = "184, 71, 42";
 
-const GREEN = "127, 240, 176";
+const OK = "15, 122, 99";
 
-const RED = "255, 140, 140";
+const ERR = "179, 38, 30";
 
-const CTL = "159, 182, 255";
+const CTL = "103, 67, 207";
 
 /** @param {string} id */
 function element(id) {
@@ -297,8 +299,9 @@ function seatBusy(site, seat) {
 
   if (!node) return;
 
-  node.classList.add("busy");
-  setTimeout(() => node.classList.remove("busy"), 700);
+  node.classList.add("heard");
+  setTimeout(() => node.classList.add("answered"), 320);
+  setTimeout(() => node.classList.remove("heard", "answered"), 1100);
 }
 
 /* ----------------------------------------------------------------- state */
@@ -342,7 +345,7 @@ function frame(now) {
   const batchWaiting = ["idle", "starting", "training"].includes(status);
   const latest = S?.rounds[S.rounds.length - 1];
 
-  // The floors never stop: customers write in whether or not anything trains.
+  // The sites never stop: customers write in whether or not anything trains.
   for (const site of SITES) {
     for (let seat = 0; seat < SEATS; seat++) {
       emit(`cust-${site}-${seat}`, `cust-${site}-${seat}`, RATE.customer, COLOR.conv, dt,
@@ -404,17 +407,17 @@ function draw(dt, moving) {
 
   for (const site of SITES) {
     for (let seat = 0; seat < SEATS; seat++) {
-      guide(lanes[`seat-${site}-${seat}`], moving ? BLUE : RED, moving ? 0.07 : 0.12, !moving);
+      guide(lanes[`seat-${site}-${seat}`], moving ? CONV : ERR, moving ? 0.1 : 0.14, !moving);
     }
   }
 
-  guide(lanes.review, BLUE, 0.2);
-  guide(lanes.train, BLUE, 0.2);
-  guide(lanes.gate, BLUE, 0.2);
-  guide(lanes.release, GREEN, 0.18);
-  guide(lanes["ret-north"], GREEN, shippedNorth ? 0.4 : 0.12);
-  guide(lanes["ret-south"], GREEN, shippedSouth ? 0.4 : 0.12);
-  guide(lanes.ctlDown, CTL, 0.18);
+  guide(lanes.review, CONV, 0.22);
+  guide(lanes.train, CONV, 0.22);
+  guide(lanes.gate, CONV, 0.22);
+  guide(lanes.release, OK, 0.2);
+  guide(lanes["ret-north"], OK, shippedNorth ? 0.45 : 0.14);
+  guide(lanes["ret-south"], OK, shippedSouth ? 0.45 : 0.14);
+  guide(lanes.ctlDown, CTL, 0.2);
 
   for (let index = particles.length - 1; index >= 0; index--) {
     const particle = particles[index];
@@ -486,7 +489,7 @@ function drawRing(round) {
   rctx.lineWidth = 9;
   rctx.beginPath();
   rctx.arc(cx, cy, r, 0, Math.PI * 2);
-  rctx.strokeStyle = "rgba(157, 180, 200, .18)";
+  rctx.strokeStyle = "rgba(92, 85, 77, .16)";
   rctx.stroke();
 
   const base = round?.baseline;
@@ -496,7 +499,7 @@ function drawRing(round) {
   if (base && cand) {
     rctx.beginPath();
     rctx.arc(cx, cy, r, start, start + Math.max(0.02, base.passed / base.total) * Math.PI * 2);
-    rctx.strokeStyle = "rgba(157, 180, 200, .55)";
+    rctx.strokeStyle = "rgba(92, 85, 77, .5)";
     rctx.lineWidth = 9;
     rctx.stroke();
     rctx.beginPath();
@@ -509,9 +512,9 @@ function drawRing(round) {
   rctx.font = "13px ui-monospace, SFMono-Regular, Menlo, monospace";
   rctx.textAlign = "center";
   rctx.textBaseline = "middle";
-  rctx.fillStyle = cand ? tone : "#9db4c8";
+  rctx.fillStyle = cand ? tone : "#766e65";
   rctx.fillText(cand ? `${cand.passed}/${cand.total}` : "gate", cx, cy - 8);
-  rctx.fillStyle = "#9db4c8";
+  rctx.fillStyle = "#766e65";
   rctx.fillText(base ? `was ${base.passed}/${base.total}` : "pending", cx, cy + 9);
 }
 
@@ -608,6 +611,7 @@ function rounds(history, trainingStatus) {
     const tag = document.createElement("span");
 
     row.dataset.result = round.status;
+    row.dataset.round = String(history.indexOf(round));
     name.textContent = round.version ?? "round";
     detail.textContent = round.baseline && round.candidate
       ? `${round.baseline.passed}/${round.baseline.total} → ${round.candidate.passed}/${round.candidate.total}`
@@ -659,12 +663,14 @@ function rounds(history, trainingStatus) {
 function feed(records) {
   const list = element("feed");
 
-  if (list.matches(":hover") || records.length === 0) return;
+  if (list.matches(":hover") || inspecting || records.length === 0) return;
 
   list.replaceChildren();
 
   for (const record of records.slice(-9).reverse()) {
     const row = document.createElement("li");
+
+    row.dataset.id = record.id;
     const site = document.createElement("span");
     const kind = document.createElement("span");
     const body = document.createElement("span");
@@ -696,7 +702,8 @@ function events(history) {
 
       if (event.stage === "collect") {
         const site = event.message.includes("south") ? "south" : "north";
-        const seat = seatNumber(event.message + event.seq);
+        const newest = S?.records.findLast((record) => record.site === site);
+        const seat = seatNumber(newest ? newest.id : event.message + event.seq);
 
         burst(`cust-${site}-${seat}`, 6, COLOR.conv, { speed: SPEED.customer, size: 2.4, trail: false, arrive: () => seatBusy(site, seat) });
         burst(`seat-${site}-${seat}`, 12, COLOR.conv, { speed: SPEED.seat, size: 3.4 });
@@ -936,11 +943,170 @@ async function poll() {
     element("review-loading").hidden = true;
     element("review-empty").hidden = false;
     element("edge-why").hidden = false;
-    element("edge-why").textContent = "TRAINING NODE UNREACHABLE — customers keep writing in at both floors";
+    element("edge-why").textContent = "TRAINING NODE UNREACHABLE — customers keep writing in at both sites";
     element("node-edge").dataset.running = "false";
   } finally {
     setTimeout(poll, POLL_MS);
   }
+}
+
+/* ------------------------------------------------------- popup inspector */
+/* Space Force's click-to-inspect, read as a transcript: who said what, what
+ * the teacher proposed, what the person approved. One record at a time. */
+
+let inspecting = false;
+
+let popupDismissedUntil = 0;
+
+/** @param {string} term @param {string} value @param {string} [tone] */
+function line(term, value, tone = "") {
+  const dt = document.createElement("dt");
+  const dd = document.createElement("dd");
+
+  dt.textContent = term;
+  dd.textContent = value;
+  dd.className = tone;
+
+  return [dt, dd];
+}
+
+/** @param {import("./contracts").Transcript} record */
+function conversationView(record) {
+  const list = document.createElement("dl");
+  const teacher = record.teacher;
+  const verdict = teacher ? `${teacher.verdict ? `${teacher.verdict} · ` : ""}${Math.round(teacher.confidence * 100)}% confidence · ${teacher.rationale}` : "not graded yet";
+
+  list.append(
+    ...line("CUSTOMER", record.prompt, "customer"),
+    ...line("ASSISTANT", record.answer),
+    ...line("TEACHER", verdict, "teacher"),
+    ...line(record.status === "approved" ? "APPROVED" : "PROPOSED", record.target || "—", "target"),
+    ...line("RECORD", `${record.site} · ${record.id} · ${record.kind} · answered by ${record.version} · ${record.status}`, "machine"),
+  );
+
+  return [list];
+}
+
+/** @param {import("./contracts").Round} round */
+function roundView(round) {
+  const list = document.createElement("dl");
+  const base = round.baseline;
+  const cand = round.candidate;
+  const score = base && cand ? `current ${base.passed}/${base.total} → candidate ${cand.passed}/${cand.total}` : "no held-out comparison";
+
+  list.append(
+    ...line("VERDICT", `${round.status === "passed" ? "shipped" : "held"} · ${round.reason}`, round.status === "passed" ? "target" : "customer"),
+    ...line("HELD OUT", score, "machine"),
+    ...line("TRAINED ON", `${round.count ?? round.training_ids?.length ?? "—"} approved conversations${round.seconds ? ` · ${round.seconds}s` : ""}${round.sha256 ? ` · adapter ${round.sha256.slice(0, 12)}` : ""}`, "machine"),
+  );
+
+  if (!base || !cand) return [list];
+
+  const held = document.createElement("ol");
+
+  held.className = "held-out";
+
+  cand.outputs.forEach((output, index) => {
+    const row = document.createElement("li");
+    const was = document.createElement("i");
+    const now = document.createElement("i");
+    const said = document.createElement("span");
+
+    was.dataset.pass = String(base.outputs[index]?.pass ?? false);
+    now.dataset.pass = String(output.pass);
+    said.textContent = `${output.prompt} — ${output.answer}`;
+    row.append(was, now, said);
+    held.append(row);
+  });
+
+  return [list, held];
+}
+
+/** @param {string} title @param {Node[]} body */
+function showPopup(title, body) {
+  const popup = element("popup");
+
+  if (popup.dataset.open === "true" || performance.now() < popupDismissedUntil) return;
+
+  text("popup-title", title);
+  element("popup-body").replaceChildren(...body);
+  popup.dataset.open = "true";
+  popup.setAttribute("aria-hidden", "false");
+  inspecting = true;
+  element("feed").classList.add("paused");
+  text("feed-hint", "paused · click or esc to resume");
+}
+
+function hidePopup() {
+  const popup = element("popup");
+
+  if (popup.dataset.open !== "true") return;
+
+  popupDismissedUntil = performance.now() + 250;
+  popup.dataset.open = "false";
+  popup.setAttribute("aria-hidden", "true");
+  inspecting = false;
+  element("feed").classList.remove("paused");
+  element("feed").querySelectorAll("li").forEach((row) => row.classList.remove("active"));
+  text("feed-hint", "click a conversation to read it whole");
+}
+
+/** @param {string} id */
+function openRecord(id) {
+  const record = S?.records.find((item) => item.id === id);
+
+  if (record) showPopup(`CONVERSATION · ${record.site.toUpperCase()} · ${record.id}`, conversationView(record));
+}
+
+/** @param {"north" | "south"} site @param {number} seat */
+function openSeat(site, seat) {
+  const record = S?.records.findLast((item) => item.site === site && seatNumber(item.id) === seat);
+
+  if (record) openRecord(record.id);
+  else showPopup(`LINE ${seat + 1} · ${site.toUpperCase()}`, [Object.assign(document.createElement("p"), { className: "empty", textContent: "no measured conversation on this line yet · the ambient traffic is representative" })]);
+}
+
+element("popup").addEventListener("click", hidePopup);
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") hidePopup();
+});
+
+element("feed").addEventListener("click", (event) => {
+  const row = event.target instanceof Element ? event.target.closest("li[data-id]") : null;
+
+  if (!(row instanceof HTMLElement) || !row.dataset.id) return;
+
+  row.classList.add("active");
+  openRecord(row.dataset.id);
+});
+
+element("rounds").addEventListener("click", (event) => {
+  const row = event.target instanceof Element ? event.target.closest("li[data-round]") : null;
+  const round = row instanceof HTMLElement ? S?.rounds[Number(row.dataset.round)] : undefined;
+
+  if (round) showPopup(`ROUND · ${round.version ?? "data gate"}`, roundView(round));
+});
+
+for (const site of SITES) {
+  element(`floor-${site}`).addEventListener("click", (event) => {
+    const seat = event.target instanceof Element ? event.target.closest(".seat") : null;
+
+    if (seat instanceof HTMLElement) openSeat(site, Number(seat.dataset.seat));
+  });
+  element(`floor-${site}`).addEventListener("keydown", (event) => {
+    const seat = event.target instanceof Element ? event.target.closest(".seat") : null;
+
+    if ((event.key === "Enter" || event.key === " ") && seat instanceof HTMLElement) {
+      event.preventDefault();
+      openSeat(site, Number(seat.dataset.seat));
+    }
+  });
+  element(`${site}-last`).addEventListener("click", () => {
+    const record = S?.records.findLast((item) => item.site === site);
+
+    if (record) openRecord(record.id);
+  });
 }
 
 element("review-form").addEventListener("submit", async (event) => {

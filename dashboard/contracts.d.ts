@@ -1,6 +1,8 @@
 export interface Teacher {
   confidence: number;
   rationale: string;
+  verdict?: string;
+  corrected_target?: string;
 }
 
 export interface Transcript {
@@ -16,6 +18,7 @@ export interface Transcript {
 }
 
 export interface EvalAnswer {
+  kind?: string;
   prompt: string;
   answer: string;
   pass: boolean;
@@ -33,6 +36,10 @@ export interface Round {
   reason: string;
   baseline?: Evaluation;
   candidate?: Evaluation;
+  count?: number;
+  seconds?: number;
+  sha256?: string;
+  training_ids?: string[];
 }
 
 export interface ReceiptEvent {

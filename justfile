@@ -66,7 +66,7 @@ record-check: check
     curl -fsS "http://localhost:{{port}}/api/state" > /dev/null || { echo "FAIL: dashboard not reachable — just up first"; exit 1; }
     @echo ""
     @echo "RECORD CHECKLIST"
-    @echo "  [ ] demo-guidance/RECORDING.md read; console set to dark (matches this board); resolution dropped"
+    @echo "  [ ] demo-guidance/RECORDING.md read; console set to light (matches this board); resolution dropped"
     @echo "  [ ] Opera, no browser chrome in frame"
     @echo "  [ ] true zero state confirmed (no finished session on screen)"
     @echo "  [ ] manual Cloud Logs and Monitoring checks completed"
