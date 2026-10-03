@@ -33,7 +33,9 @@ Say: “These agent sites run inside the customer's infrastructure. Their text
 conversations go to a training node in the same environment. Expanso Cloud
 manages the work; the conversations stay here.”
 
-Point at the customer boundary, two sites and local training node. The teacher
+Point at the dashed customer boundary with the two sites and the Expanso Edge
+training node inside it, and Expanso Cloud outside it with only the control
+lane crossing. The site lanes are already streaming: customers keep talking. The teacher
 is `mistral-small:24b`; the student is a pinned 135M-parameter instruct model.
 The exercise is text-only; no telephony or audio is captured.
 
@@ -44,7 +46,8 @@ just produce 1
 ```
 
 The external producer asks the actual North model a refund question and sends
-its answer through Expanso. Watch the transcript and teacher counts change.
+its answer through Expanso. Watch the burst on the north lane, then the transcript and teacher counts
+change and the flow reach the REVIEW stage.
 Read the teacher's confidence, rationale and correction. Fix the sentence if
 needed, then click **Approve for training**.
 
@@ -80,14 +83,16 @@ Say: “This container fine-tunes the small model here. These are completed
 training steps. Then we compare the candidate with the current model on eight
 requests that were held out of training.”
 
-Keep the progress and gate visible. Explain the actual score shown. The first
+Keep the TRAIN and GATE stages visible; the train lane pulses while steps run. Explain the actual score shown. The first
 verified pass took 159.2 seconds and improved from 0/8 to 8/8; a fresh take may
 differ. These eight lexical policy checks are deliberately narrow. Do not call
 them a general safety or quality benchmark.
 
 ## Beat 5: release and the answer
 
-On a passing gate, watch North accept the adapter before South. Expanso carries
+On a passing gate, watch the teal burst leave the gate along the return lane
+and North accept the adapter before South; the return lane stays teal once
+both sites run it. Expanso carries
 the adapter bytes. Each site verifies the checksum and runs a local inference
 check before acknowledging activation. The before/after panel moves forward
 when both site versions change.

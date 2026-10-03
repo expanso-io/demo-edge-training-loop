@@ -28,3 +28,13 @@ Pipeline components were checked against the local official Expanso docs
 snapshot at `~/.expanso-docs/llm.txt`: `http_server`, `http_client`, `http`,
 `generate` (timer only), `log`, local rate limits and `reject_errored`.
 Every YAML is also validated with the installed Expanso Edge binary.
+
+## What the board animates
+
+Every number rendered is measured from local receipts. The continuous
+conversation particles leaving each agent site are representative of live
+customer traffic at the sites and are not a count of anything; the measured
+count is the transcripts figure beside them, and each real receipt adds its
+own burst on its own site's lane. Stage, control, and return lanes move only
+when the measured state says there is something to move (graded records, an
+approved batch, a live training run, running Cloud jobs, a passed release).

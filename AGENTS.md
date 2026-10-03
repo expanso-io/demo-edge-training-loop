@@ -22,6 +22,17 @@ port the winners here → `just check`.
 - Accepted recording warnings and manual console checks:
   `RECORDING_PREFLIGHT.md` and `docs/EXPANSO_ISSUES.md`.
 
+## Board contract
+
+- `just motion-check` must pass before any screenshot review or take. The
+  flow grammar in `../_demo-kit/DESIGN_SYSTEM.md` is the spec for the loop;
+  the sites emit continuously and lanes connect box walls.
+- Deviation from the grammar, with reason: no YAML panel under the edge node.
+  The pipeline YAML is read on camera in the Expanso Cloud editor (beat 1),
+  and the space goes to the human review card, which is the claim's hard call.
+- Ambient site emission is representative; counts are measured. Say so if
+  asked, and never scale the ambient rate to look like a number.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

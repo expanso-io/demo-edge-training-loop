@@ -19,7 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DASHBOARD = ROOT / 'dashboard'
 BACKEND = 'http://127.0.0.1:8025'
-CLOUD = {'checked': 0, 'mode': 'Cloud status awaiting verification'}
+CLOUD = {'checked': 0, 'mode': 'Cloud status awaiting verification', 'running': 0, 'total': 0}
+JOBS = 6
 
 
 def poll_cloud():
@@ -30,9 +31,11 @@ def poll_cloud():
             jobs = [job for job in json.loads(result.stdout)
                     if job['spec']['name'].startswith('train-loop-')]
             running = sum(job['status']['state']['state_type'].lower() == 'running' for job in jobs)
-            CLOUD.update(checked=time.time(), mode=f'Expanso Cloud: {running}/6 jobs Running')
+            CLOUD.update(checked=time.time(), mode=f'Expanso Cloud: {running}/{JOBS} jobs Running',
+                         running=running, total=JOBS)
         except (OSError, ValueError, subprocess.SubprocessError):
-            CLOUD.update(checked=time.time(), mode='Cloud status unavailable; local receipts only')
+            CLOUD.update(checked=time.time(), mode='Cloud status unavailable; local receipts only',
+                         running=0, total=0)
         time.sleep(15)
 
 
@@ -54,7 +57,10 @@ class Handler(SimpleHTTPRequestHandler):
             with urllib.request.urlopen(request, timeout=10) as response:
                 data = json.load(response)
                 if path == '/state':
-                    data['mode'] = CLOUD['mode'] if time.time() - CLOUD['checked'] < 30 else 'Cloud status stale; local receipts only'
+                    fresh = time.time() - CLOUD['checked'] < 30
+                    data['mode'] = CLOUD['mode'] if fresh else 'Cloud status stale; local receipts only'
+                    # total 0 means unknown: the board shows the edge live on local receipts alone
+                    data['cloud'] = {'running': CLOUD['running'], 'total': CLOUD['total']} if fresh else {'running': 0, 'total': 0}
                 self.json(200, data)
         except urllib.error.HTTPError as error:
             self.json(error.code, json.load(error))

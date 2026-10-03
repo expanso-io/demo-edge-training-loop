@@ -5,64 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Train where the conversations happen</title>
 <link rel="stylesheet" href="styles.css">
+<script src="app.js" defer></script>
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to learning loop</a>
+<a class="skip-link" href="#topology">Skip to the learning loop</a>
 <header>
-  <div><span class="eyebrow">EXPANSO / LOCAL LEARNING</span><h1>Train where the conversations happen.</h1></div>
-  <button id="theme" type="button">Dark view</button>
+  <span class="logochip"><img src="expanso-logo.png" alt="Expanso"></span>
+  <span class="sub">TRAIN WHERE THE CONVERSATIONS HAPPEN &middot; SITES &rarr; TEACHER &rarr; PERSON &rarr; GATE &rarr; SITES</span>
+  <div class="pills">
+    <span class="pill" id="pill-node" data-state="off">NODE</span>
+    <span class="pill" id="pill-cloud" data-state="off">CLOUD</span>
+    <span class="pill" id="pill-teacher" data-state="off">TEACHER</span>
+    <span class="pill" id="pill-training" data-state="off">TRAINING</span>
+    <span class="pill" id="pill-release" data-state="off">RELEASE</span>
+  </div>
 </header>
-<main id="main">
-  <div class="control"><strong>Expanso Cloud</strong><span id="mode">Checking control plane</span></div>
-  <p id="connection" role="status">Connecting to the local training node…</p>
-  <section class="boundary" aria-label="Customer environment">
-    <div class="boundary-title"><h2>Customer environment</h2><span>Conversations and models stay here</span></div>
-    <div class="loop" id="loop">
-      <canvas id="flow" aria-hidden="true"></canvas>
-      <section class="site-node" id="node-sites" aria-label="Agent sites">
-        <span class="eyebrow">AGENT SITES</span>
-        <div class="site" id="node-north"><h3>North</h3><span class="version" id="north-version">Connecting</span><span id="canary">Canary on next release</span></div>
-        <div class="site" id="node-south"><h3>South</h3><span class="version" id="south-version">Connecting</span></div>
-        <p class="count"><strong id="received">0</strong> <span id="received-label">transcripts received</span></p>
-      </section>
-      <section class="training-node" aria-label="Local training node">
-        <div class="training-node-title">Training node · on this Mac</div>
-        <div class="stages">
-          <div class="step" id="node-teacher"><span class="eyebrow">GRADE</span><h3>Teacher</h3><strong class="stage-number" id="graded">0</strong><span class="caption">graded</span><p class="live-state" id="teacher-status">Waiting for transcripts</p></div>
-          <div class="step" id="node-review"><span class="eyebrow">REVIEW</span><h3>Human check</h3><strong class="stage-number" id="review-count">0</strong><span class="caption">awaiting review</span><p class="live-state" id="approved-count">0 approved</p></div>
-          <div class="step" id="node-train"><span class="eyebrow">TRAIN</span><h3>Local LoRA</h3><p id="training-state">Waiting for approved data</p><progress id="progress" max="100" value="0" aria-label="Training progress"></progress></div>
-          <div class="step" id="node-gate"><span class="eyebrow">GATE</span><h3>Beat the current model</h3><p id="score-current">Current: awaiting eval</p><p id="score-candidate">Candidate: awaiting eval</p><strong id="gate-verdict">Not released</strong></div>
-        </div>
-      </section>
-      <span class="return-label">Passing adapter returns to the sites · canary first</span>
+
+<main>
+  <section class="topology" id="topology" aria-label="Learning loop">
+    <canvas id="flow" aria-hidden="true"></canvas>
+
+    <div class="node node-orch" id="node-orch" data-flow="orchestrator">
+      <h2><img class="mark" src="expanso-mark.png" alt=""> EXPANSO CLOUD</h2>
+      <p class="dim" id="cloud-jobs">jobs &middot; checking</p>
+      <p class="dim">control only &middot; no conversation leaves</p>
     </div>
-    <section class="gate-history" aria-label="Gate decisions"><div id="rounds"></div></section>
-    <div class="detail-grid">
-      <section class="teacher" aria-labelledby="teacher-title">
-        <span class="eyebrow">GRADE / REVIEW</span><h2 id="teacher-title">A larger model checks the work.</h2>
-        <div id="review-loading" class="skeleton" aria-label="Loading review queue"></div>
-        <p id="review-empty" hidden>Waiting for a graded conversation.</p>
-        <form id="review-form" hidden>
-          <div class="review-meta"><strong id="review-id"></strong><span id="confidence"></span></div>
-          <span class="caption">Customer</span><p id="prompt" class="quote"></p>
-          <span class="caption">Current answer</span><p id="answer" class="quote old"></p>
-          <p id="rationale" class="rationale"></p>
-          <label for="target">Teacher correction · edit if needed</label>
-          <textarea id="target" rows="3" maxlength="2000" required></textarea>
-          <div class="review-actions"><button type="submit" id="approve">Approve for training</button><span id="pending"></span></div>
-          <p id="review-error" role="alert"></p>
-        </form>
-      </section>
-      <div class="gate"><span class="eyebrow">EVALUATE / RELEASE</span><h2 id="release-title">Only an improvement ships.</h2><p id="gate-state">The current model stays at both sites.</p></div>
+
+    <div class="boundary" id="boundary" aria-hidden="true">
+      <span>CUSTOMER ENVIRONMENT &middot; CONVERSATIONS AND MODELS STAY HERE</span>
+    </div>
+
+    <div class="node node-sites" id="node-sites" data-flow="source">
+      <h2>AGENT SITES</h2>
+      <div class="site" id="site-north"><b>north</b><code id="north-version">base</code></div>
+      <div class="site" id="site-south"><b>south</b><code id="south-version">base</code></div>
+      <div class="big"><span id="received">0</span><small> transcripts</small></div>
+    </div>
+
+    <div class="node node-edge" id="node-edge" data-flow="edge">
+      <h2><img class="mark" src="expanso-mark.png" alt=""> EXPANSO EDGE &middot; TRAINING NODE</h2>
+      <div class="stages">
+        <div class="stage" id="stage-teacher"><span>TEACHER</span><b id="graded">0</b><i>graded</i></div>
+        <div class="stage" id="stage-review"><span>REVIEW</span><b id="review-count">0</b><i>awaiting a person</i></div>
+        <div class="stage" id="stage-train"><span>TRAIN</span><b id="train-step">&ndash;</b><i id="train-label">LoRA &middot; idle</i></div>
+        <div class="stage" id="stage-gate"><span>GATE</span><b id="gate-score">&ndash;</b><i id="gate-label">held-out &middot; 8 checks</i></div>
+      </div>
+      <p class="why" id="edge-why" hidden></p>
+    </div>
+
+    <div class="lane-label" id="return-label">ADAPTER RETURNS &middot; NORTH FIRST</div>
+  </section>
+
+  <section class="panels">
+    <div class="panel shelf">
+      <h3>ARRIVING NOW &mdash; local receipts</h3>
+      <ul class="feed" id="events"><li class="empty">awaiting the first transcript</li></ul>
+    </div>
+
+    <div class="panel review">
+      <h3>THE HUMAN CALL</h3>
+      <div id="review-loading" class="skeleton" aria-label="Loading review queue"></div>
+      <p id="review-empty" class="empty" hidden>nothing waiting on a person</p>
+      <form id="review-form" hidden>
+        <div class="review-meta"><code id="review-id"></code><span class="pill" id="confidence" data-state="warn"></span></div>
+        <p class="quote" id="prompt"></p>
+        <p class="quote old" id="answer"></p>
+        <p class="rationale" id="rationale"></p>
+        <label for="target">Teacher correction &middot; edit if needed</label>
+        <textarea id="target" rows="3" maxlength="2000" required></textarea>
+        <div class="review-actions"><button type="submit" id="approve">Approve for training</button><span id="pending"></span></div>
+        <p id="review-error" role="alert"></p>
+      </form>
+    </div>
+
+    <div class="panel answers" id="comparison">
+      <h3>SAME HELD-OUT REQUEST</h3>
+      <p class="prompt" id="eval-prompt">answers appear after the held-out evaluation</p>
+      <div class="pair">
+        <section><h4 id="before-title">CURRENT</h4><p id="before" class="old">&ndash;</p></section>
+        <section><h4 id="after-title">CANDIDATE</h4><p id="after">&ndash;</p></section>
+      </div>
+      <p class="verdict" id="gate-state"></p>
     </div>
   </section>
-  <section id="comparison" class="comparison" aria-labelledby="comparison-title">
-    <div><span class="eyebrow">SAME HELD-OUT REQUEST</span><h2 id="comparison-title">What changed in the answer?</h2><p id="eval-prompt">Answers appear after the held-out evaluation.</p></div>
-    <div class="answers"><section><h3 id="before-title">Current model</h3><p id="before">Awaiting evaluation</p></section><section><h3 id="after-title">Candidate</h3><p id="after">Awaiting evaluation</p></section></div>
-  </section>
-  <details><summary>Measured events</summary><ol id="events"><li>Waiting for local receipts</li></ol></details>
 </main>
-<footer>Text conversations · local teacher · human review · held-out gate</footer>
-<script src="app.js"></script>
 </body>
 </html>

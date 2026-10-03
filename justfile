@@ -42,6 +42,10 @@ test:
 video-check:
     @uv run -s ../_demo-kit/lint-demo-ui.py . --video-strict
 
+# the board must MOVE at zero state (rule 1 + flow grammar): two real screenshots, pixel diff
+motion-check:
+    @uv run -s ../_demo-kit/probe-motion.py .
+
 # Expanso pipelines: syntax, then the all-demos rules (logs, a real output,
 # short lines, no blank lines in config, generate only for timers).
 validate:
@@ -55,7 +59,7 @@ pipeline-check:
 produce count="16":
     uv run -s scripts/producer.py --count {{count}}
 
-check: test validate pipeline-check video-check clean-check
+check: test validate pipeline-check video-check motion-check clean-check
 
 # everything that must be true before a take: gates + live endpoint + checklist
 record-check: check

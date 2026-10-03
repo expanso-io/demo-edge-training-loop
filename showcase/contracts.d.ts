@@ -37,19 +37,56 @@ export interface ReceiptEvent {
   message: string;
 }
 
+export interface Training {
+  status: string;
+  step: number;
+  steps: number;
+}
+
+export interface Cloud {
+  running: number;
+  total: number;
+}
+
+export interface State {
+  records: Transcript[];
+  events: ReceiptEvent[];
+  mode: string;
+  cloud: Cloud;
+  sites: { north: string; south: string };
+  rounds: Round[];
+  training: Training;
+}
+
 export interface Point {
   x: number;
   y: number;
 }
 
-export interface FlowLink {
-  key: string;
-  from: string;
-  to: string;
-  returning: boolean;
+export interface CurveLane {
+  kind: "curve";
+  from: Point;
+  to: Point;
+  bow: number;
+  /** x past which a source particle has left its own box and reads at full strength */
+  exit?: number;
 }
 
-export interface Pulse {
-  key: string;
-  start: number;
+export interface PolyLane {
+  kind: "poly";
+  points: Point[];
+}
+
+export type Lane = CurveLane | PolyLane;
+
+export interface Particle {
+  lane: string;
+  color: string;
+  t: number;
+  speed: number;
+  size: number;
+  trail: boolean;
+  /** dissipates before arrival: the edge is idle, or the gate rejected it */
+  die: boolean;
+  jitter: number;
 }
