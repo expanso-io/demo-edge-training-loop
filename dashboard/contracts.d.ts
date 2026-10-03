@@ -5,6 +5,9 @@ export interface Teacher {
 
 export interface Transcript {
   id: string;
+  site: string;
+  kind: string;
+  version: string;
   status: string;
   teacher: Teacher;
   prompt: string;
@@ -25,6 +28,7 @@ export interface Evaluation {
 }
 
 export interface Round {
+  version?: string;
   status: string;
   reason: string;
   baseline?: Evaluation;
@@ -41,6 +45,7 @@ export interface Training {
   status: string;
   step: number;
   steps: number;
+  version?: string;
 }
 
 export interface Cloud {
@@ -54,6 +59,7 @@ export interface State {
   mode: string;
   cloud?: Cloud;
   sites: { north: string; south: string };
+  rollback?: unknown;
   rounds: Round[];
   training: Training;
 }
@@ -68,13 +74,14 @@ export interface CurveLane {
   from: Point;
   to: Point;
   bow: number;
-  /** x past which a source particle has left its own box and reads at full strength */
+  /** x past which a source particle has left its own card and reads at full strength */
   exit?: number;
 }
 
 export interface PolyLane {
   kind: "poly";
   points: Point[];
+  exit?: number;
 }
 
 export type Lane = CurveLane | PolyLane;
@@ -89,4 +96,6 @@ export interface Particle {
   /** dissipates before arrival: the edge is idle, or the gate rejected it */
   die: boolean;
   jitter: number;
+  /** runs once when the particle reaches the end of its lane */
+  arrive?: () => void;
 }

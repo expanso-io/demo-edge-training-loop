@@ -1,16 +1,14 @@
 /* Local learning loop — live board.
  *
- * The screen is always moving. Each agent site emits conversation particles
- * continuously (customers keep talking whether or not anything is training);
- * every measured receipt adds a visible burst on its lane. Inside the edge
- * node the stage lanes carry what the counts say is there: graded records to
- * review, approved records to training, training steps to the gate. A pass
- * sends the adapter back along the return lane, north first; a rejection
- * dies at the gate in red. Expanso Cloud sits outside the customer boundary
- * and only its control heartbeat crosses the line.
- *
- * Numbers on the board are measured. Ambient emission is representative of
- * live conversations and is documented as such in DESIGN_BRIEF.md.
+ * Nothing drawn is invented. Customers write in at every seat of both support
+ * floors continuously (representative; the counts beside them are measured);
+ * each measured receipt adds a burst on its own site's lane. Inside the
+ * training node a spine carries what the counts say is there: graded
+ * conversations to the person, approved ones to training while a batch is
+ * waiting, steps to the gate while a run is live. A pass sends the adapter
+ * through the release column and back to the floors, north first; a
+ * rejection dies at the gate. Expanso Cloud sits outside the customer
+ * boundary and only its control heartbeat crosses the line.
  */
 
 "use strict";
@@ -19,19 +17,32 @@ const POLL_MS = 1000;
 
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.35 : 1;
 
+const SEATS = 4;
+
+const SITES = /** @type {const} */ (["north", "south"]);
+
 const RATE = {
-  site: 3,          // ambient conversations per site, per second
-  toReview: 0.9,    // graded records moving to the person
-  perApproved: 0.3, // approved records trickling toward training, each
-  training: 2.6,    // steps toward the gate while a run is live
+  customer: 0.55,   // ambient customer messages per seat, per second
+  seat: 0.3,        // ambient transcripts leaving each seat
+  toReview: 0.9,
+  perApproved: 0.3,
+  training: 2.6,
+  released: 0.45,   // accepted adapter live at a site
   ctlDown: 1.4,
   ctlUp: 0.9,
-  shipped: 0.5,     // accepted adapter live at the sites
 };
 
-const SPEED = { site: 0.42, stage: 0.55, train: 0.8, ret: 0.5, ctl: 0.4 };
+const SPEED = { customer: 1.1, seat: 0.38, spine: 0.7, gate: 0.6, ret: 0.45, ctl: 0.4 };
 
-const COLOR = { conv: "#2b63c7", ok: "#0d8577", err: "#c2362d", ctl: "#7f8796" };
+const COLOR = { conv: "#58c7ff", ok: "#7ff0b0", err: "#ff8c8c", ctl: "#9fb6ff" };
+
+const BLUE = "88, 199, 255";
+
+const GREEN = "127, 240, 176";
+
+const RED = "255, 140, 140";
+
+const CTL = "159, 182, 255";
 
 /** @param {string} id */
 function element(id) {
@@ -51,101 +62,134 @@ function text(id, value) {
 
   node.textContent = next;
 
-  const stage = node.closest(".stage, .site");
+  const num = node.closest(".num");
 
-  if (stage) {
-    stage.classList.remove("flash");
-    void stage.getBoundingClientRect();
-    stage.classList.add("flash");
+  if (num) {
+    num.classList.remove("flash");
+    void num.getBoundingClientRect();
+    num.classList.add("flash");
   }
 }
 
-/** @param {string} id @param {string} state */
-function pill(id, state) {
-  element(id).dataset.state = state;
+/** @param {string} id @param {string} value */
+function setState(id, value) {
+  element(id).dataset.state = value;
 }
 
-const canvas = element("flow");
+const stage = element("stage");
 
-const topology = element("topology");
+const flowCanvas = element("flow");
 
-function brush() {
-  if (!(canvas instanceof HTMLCanvasElement)) throw new Error("Flow surface is not a canvas");
+const ringCanvas = element("ring");
 
-  const context = canvas.getContext("2d");
+/** @param {HTMLElement} node */
+function context2d(node) {
+  if (!(node instanceof HTMLCanvasElement)) throw new Error("Not a canvas");
+
+  const context = node.getContext("2d");
 
   if (!context) throw new Error("Canvas unavailable");
 
   return context;
 }
 
-const ctx = brush();
+const ctx = context2d(flowCanvas);
+
+const rctx = context2d(ringCanvas);
 
 /* ------------------------------------------------------------ geometry */
-
-/** @param {string} id @param {"left" | "right" | "top" | "bottom" | "center"} side */
-function anchor(id, side) {
-  const node = element(id).getBoundingClientRect();
-  const frame = topology.getBoundingClientRect();
-  const x = side === "left" ? node.left : side === "right" ? node.right : node.left + node.width / 2;
-  const y = side === "top" ? node.top : side === "bottom" ? node.bottom : node.top + node.height / 2;
-
-  return { x: x - frame.left, y: y - frame.top };
-}
 
 /** @typedef {import("./contracts").Point} Point */
 
 /** @typedef {import("./contracts").Lane} Lane */
 
+/** @param {Element} node @param {"left" | "right" | "top" | "bottom" | "center"} side */
+function anchor(node, side) {
+  const box = node.getBoundingClientRect();
+  const frame = stage.getBoundingClientRect();
+  const x = side === "left" ? box.left : side === "right" ? box.right : box.left + box.width / 2;
+  const y = side === "top" ? box.top : side === "bottom" ? box.bottom : box.top + box.height / 2;
+
+  return { x: x - frame.left, y: y - frame.top };
+}
+
+/** @param {string} id @param {"left" | "right" | "top" | "bottom" | "center"} side */
+function at(id, side) {
+  return anchor(element(id), side);
+}
+
+/** @param {string} id */
+function glyph(id) {
+  return anchor(element(id).querySelector(".glyph") ?? element(id), "center");
+}
+
 /** @type {Record<string, Lane>} */
 let lanes = {};
 
-function stacked() {
-  return element("node-edge").getBoundingClientRect().top > element("node-sites").getBoundingClientRect().bottom;
+/** @param {Point} from @param {Point} to @param {number} bow @param {number} [exit] @returns {Lane} */
+function curve(from, to, bow, exit) {
+  return { kind: "curve", from, to, bow, exit };
 }
 
-/** Lanes connect box walls (DESIGN_SYSTEM.md flow grammar rule 4). */
+/** Lanes connect seats, glyphs and card walls; recomputed on resize and render. */
 function layout() {
-  const edgeIn = anchor("node-edge", "left");
-  const teacher = anchor("stage-teacher", "center");
-  const sitesBottom = anchor("node-sites", "bottom");
-  const gateBottom = anchor("stage-gate", "bottom");
-  const frameHeight = topology.clientHeight;
-  const vertical = stacked();
+  const edgeIn = at("node-edge", "left");
+  const teacher = at("stage-teacher", "center");
+  const stacked = at("node-edge", "top").y > at("site-south", "bottom").y;
+  const bottom = stage.clientHeight - 12;
 
-  /** @param {"site-north" | "site-south"} id @param {number} bow @returns {Lane} */
-  const siteLane = (id, bow) => {
-    const chip = anchor(id, "right");
-    const out = anchor("node-sites", "right");
+  /** @type {Record<string, Lane>} */
+  const next = {};
 
-    const target = vertical
-      ? { x: anchor("node-edge", "center").x + bow * 6, y: anchor("node-edge", "top").y }
-      : { x: edgeIn.x, y: teacher.y + bow };
+  for (const site of SITES) {
+    const card = element(`site-${site}`);
+    const seats = card.querySelectorAll(".seat");
+    const cardLeft = anchor(card, "left");
+    const cardRight = anchor(card, "right");
 
-    return { kind: "curve", from: { x: chip.x + 2, y: chip.y }, to: target, bow: vertical ? 0 : bow * 1.5, exit: out.x };
-  };
+    seats.forEach((seat, index) => {
+      const centre = anchor(seat, "center");
+      const spread = (index - (SEATS - 1) / 2) * 14;
 
-  const margin = topology.clientWidth - 10;
+      next[`cust-${site}-${index}`] = curve({ x: cardLeft.x + 6, y: centre.y + (index % 2 ? 14 : -14) }, centre, 0);
+      // Out of the seat, through the card's right wall at the seat's own
+      // height, then across the gap into the edge node beside the teacher.
+      next[`seat-${site}-${index}`] = stacked
+        ? curve(centre, { x: at("node-edge", "center").x + spread, y: at("node-edge", "top").y }, 0, cardRight.x)
+        : { kind: "poly", points: [centre, { x: cardRight.x, y: centre.y + spread }, { x: edgeIn.x, y: teacher.y + spread + (site === "north" ? -22 : 22) }], exit: cardRight.x };
+    });
+  }
 
-  const ctlPoints = [anchor("node-orch", "right"), { x: margin, y: anchor("node-orch", "right").y },
-    { x: margin, y: anchor("node-edge", "right").y }, anchor("node-edge", "right")];
+  next.review = curve(glyph("stage-teacher"), glyph("stage-review"), 0);
+  next.train = curve(glyph("stage-review"), glyph("stage-train"), 0);
+  next.gate = curve(glyph("stage-train"), glyph("stage-gate"), 0);
+  next.reject = curve(glyph("stage-gate"), { x: glyph("stage-gate").x - 34, y: glyph("stage-gate").y + 40 }, 8);
+  next.release = curve(at("stage-gate", "right"), at("improvement", "left"), 0);
 
-  const returnPoints = vertical
-    ? [gateBottom, { x: gateBottom.x, y: gateBottom.y + 18 }, { x: 10, y: gateBottom.y + 18 },
-      { x: 10, y: anchor("node-sites", "center").y }, anchor("node-sites", "left")]
-    : [gateBottom, { x: gateBottom.x, y: frameHeight - 30 }, { x: sitesBottom.x, y: frameHeight - 30 }, sitesBottom];
+  const ladderBottom = at("ladder", "bottom");
 
-  lanes = {
-    north: siteLane("site-north", -16),
-    south: siteLane("site-south", 16),
-    review: { kind: "curve", from: anchor("stage-teacher", "right"), to: anchor("stage-review", "left"), bow: 0 },
-    train: { kind: "curve", from: anchor("stage-review", "right"), to: anchor("stage-train", "left"), bow: 0 },
-    gate: { kind: "curve", from: anchor("stage-train", "right"), to: anchor("stage-gate", "left"), bow: 0 },
-    reject: { kind: "curve", from: anchor("stage-gate", "center"), to: { x: anchor("stage-gate", "center").x + 36, y: anchor("stage-gate", "bottom").y + 26 }, bow: 10 },
-    ret: { kind: "poly", points: returnPoints },
-    ctlDown: vertical ? { kind: "poly", points: ctlPoints } : { kind: "curve", from: anchor("node-orch", "bottom"), to: anchor("node-edge", "top"), bow: 0 },
-    ctlUp: vertical ? { kind: "poly", points: [...ctlPoints].reverse() } : { kind: "curve", from: anchor("node-edge", "top"), to: anchor("node-orch", "bottom"), bow: 0 },
-  };
+  for (const site of SITES) {
+    const siteBottom = at(`site-${site}`, "bottom");
+    const siteLeft = at(`site-${site}`, "left");
+    const dx = site === "north" ? -40 : 40;
+
+    next[`ret-${site}`] = stacked
+      ? { kind: "poly", points: [ladderBottom, { x: ladderBottom.x, y: ladderBottom.y + 16 }, { x: 10, y: ladderBottom.y + 16 }, { x: 10, y: siteLeft.y }, siteLeft] }
+      : { kind: "poly", points: [ladderBottom, { x: ladderBottom.x, y: bottom }, { x: siteBottom.x + dx, y: bottom }, { x: siteBottom.x + dx, y: siteBottom.y }] };
+  }
+
+  next.ctlDown = curve(at("node-orch", "bottom"), at("node-edge", "top"), 0);
+  next.ctlUp = curve(at("node-edge", "top"), at("node-orch", "bottom"), 0);
+  lanes = next;
+
+  // The boundary encloses the site cards and the edge node; Cloud stays outside it.
+  const boundary = element("boundary");
+  const frame = stage.getBoundingClientRect();
+
+  boundary.style.top = `${at("node-orch", "bottom").y + 10}px`;
+  boundary.style.left = `${at("site-north", "left").x - 12}px`;
+  boundary.style.right = `${frame.width - at("node-edge", "right").x - 12}px`;
+  boundary.style.bottom = `${frame.height - Math.max(at("site-south", "bottom").y, at("node-edge", "bottom").y) - 12}px`;
 }
 
 /** @param {number} a @param {number} c @param {number} b @param {number} t */
@@ -185,13 +229,13 @@ function along(lane, t) {
 }
 
 function resize() {
-  const box = topology.getBoundingClientRect();
+  const box = stage.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
 
-  if (!(canvas instanceof HTMLCanvasElement)) return;
+  if (!(flowCanvas instanceof HTMLCanvasElement)) return;
 
-  canvas.width = Math.max(1, Math.floor(box.width * dpr));
-  canvas.height = Math.max(1, Math.floor(box.height * dpr));
+  flowCanvas.width = Math.max(1, Math.floor(box.width * dpr));
+  flowCanvas.height = Math.max(1, Math.floor(box.height * dpr));
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   layout();
 }
@@ -215,6 +259,7 @@ function spawn(lane, color, opts = {}) {
     trail: opts.trail !== false,
     die: opts.die || false,
     jitter: (Math.random() - 0.5) * 6,
+    arrive: opts.arrive,
   });
 }
 
@@ -237,6 +282,25 @@ function burst(lane, count, color, opts = {}) {
   }
 }
 
+/** @param {string} id */
+function seatNumber(id) {
+  let hash = 0;
+
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
+
+  return hash % SEATS;
+}
+
+/** @param {string} site @param {number} seat */
+function seatBusy(site, seat) {
+  const node = element(`floor-${site}`).querySelector(`[data-seat="${seat}"]`);
+
+  if (!node) return;
+
+  node.classList.add("busy");
+  setTimeout(() => node.classList.remove("busy"), 700);
+}
+
 /* ----------------------------------------------------------------- state */
 
 /** @type {import("./contracts").State | null} */
@@ -246,7 +310,7 @@ let connected = false;
 
 let latestEvent = 0;
 
-let lastRound = 0;
+let lastRound = -1;
 
 /** @type {{north: string, south: string}} */
 let lastSites = { north: "base", south: "base" };
@@ -255,8 +319,12 @@ let lastTraining = "idle";
 
 let lastFrame = performance.now();
 
+function cloudRunning() {
+  return S?.cloud?.running ?? 0;
+}
+
 function live() {
-  return connected && (S?.cloud?.running ?? 1) > 0;
+  return connected && (S?.cloud?.total ? cloudRunning() > 0 : true);
 }
 
 /** @param {number} now */
@@ -269,23 +337,36 @@ function frame(now) {
   const records = S?.records ?? [];
   const approved = records.filter((record) => record.status === "approved").length;
   const graded = records.filter((record) => record.teacher).length;
-  const training = S?.training.status === "training";
-  const batchWaiting = ["idle", "starting", "training"].includes(S?.training.status ?? "idle");
-  const shipped = document.body.dataset.shipped === "true";
+  const status = S?.training.status ?? "idle";
+  const training = status === "training";
+  const batchWaiting = ["idle", "starting", "training"].includes(status);
+  const latest = S?.rounds[S.rounds.length - 1];
 
-  // Rule 2: the sites emit whether or not anything listens.
-  emit("north", "north", RATE.site, COLOR.conv, dt, { speed: SPEED.site, die: !moving, size: 3.2 + Math.random() * 1.4 });
-  emit("south", "south", RATE.site, COLOR.conv, dt, { speed: SPEED.site, die: !moving, size: 3.2 + Math.random() * 1.4 });
-
-  if (moving) {
-    emit("review", "review", graded ? RATE.toReview : 0, COLOR.conv, dt, { speed: SPEED.stage });
-    emit("train", "train", batchWaiting ? Math.min(3, approved * RATE.perApproved) : 0, COLOR.conv, dt, { speed: SPEED.stage, size: 2.6 });
-    emit("gate", "gate", training ? RATE.training : 0, COLOR.conv, dt, { speed: SPEED.train, size: 2.4 });
-    // The accepted adapter is live at both sites: the loop stays visibly closed.
-    emit("ret", "ret", shipped ? RATE.shipped : 0, COLOR.ok, dt, { speed: SPEED.ret, size: 3 });
+  // The floors never stop: customers write in whether or not anything trains.
+  for (const site of SITES) {
+    for (let seat = 0; seat < SEATS; seat++) {
+      emit(`cust-${site}-${seat}`, `cust-${site}-${seat}`, RATE.customer, COLOR.conv, dt,
+        { speed: SPEED.customer, size: 2.2, trail: false, arrive: () => seatBusy(site, seat) });
+      emit(`seat-${site}-${seat}`, `seat-${site}-${seat}`, RATE.seat, COLOR.conv, dt,
+        { speed: SPEED.seat, die: !moving, size: 3 + Math.random() * 1.2 });
+    }
   }
 
-  if ((S?.cloud?.running ?? 0) > 0) {
+  if (moving) {
+    emit("review", "review", graded ? RATE.toReview : 0, COLOR.conv, dt, { speed: SPEED.spine, size: 2.6 });
+    emit("train", "train", batchWaiting ? Math.min(3, approved * RATE.perApproved) : 0, COLOR.conv, dt, { speed: SPEED.spine, size: 2.6 });
+    emit("gate", "gate", training ? RATE.training : 0, COLOR.conv, dt, { speed: SPEED.spine, size: 2.4 });
+
+    if (latest?.status === "passed") emit("release", "release", RATE.released, COLOR.ok, dt, { speed: SPEED.gate, size: 2.8 });
+
+    for (const site of SITES) {
+      const shipped = (S?.sites[site] ?? "base") !== "base";
+
+      emit(`ret-${site}`, `ret-${site}`, shipped ? RATE.released : 0, COLOR.ok, dt, { speed: SPEED.ret, size: 3 });
+    }
+  }
+
+  if (cloudRunning() > 0) {
     emit("ctlDown", "ctlDown", RATE.ctlDown, COLOR.ctl, dt, { speed: SPEED.ctl, size: 2.4, trail: false });
     emit("ctlUp", "ctlUp", RATE.ctlUp, COLOR.ctl, dt, { speed: SPEED.ctl, size: 2.4, trail: false });
   }
@@ -294,11 +375,10 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-/** @param {Lane} lane @param {number} alpha @param {boolean} broken @param {boolean} [shipped] */
-function guide(lane, alpha, broken, shipped = false) {
-  ctx.strokeStyle = broken ? `rgba(194, 54, 45, ${alpha + 0.1})`
-    : shipped ? `rgba(13, 133, 119, ${alpha + 0.18})` : `rgba(43, 99, 199, ${alpha})`;
-  ctx.setLineDash(broken ? [4, 7] : []);
+/** @param {Lane} lane @param {string} rgb @param {number} alpha @param {boolean} [dashed] */
+function guide(lane, rgb, alpha, dashed = false) {
+  ctx.strokeStyle = `rgba(${rgb}, ${alpha})`;
+  ctx.setLineDash(dashed ? [4, 7] : []);
   ctx.beginPath();
 
   if (lane.kind === "curve") {
@@ -316,18 +396,25 @@ function guide(lane, alpha, broken, shipped = false) {
 
 /** @param {number} dt @param {boolean} moving */
 function draw(dt, moving) {
-  ctx.clearRect(0, 0, topology.clientWidth, topology.clientHeight);
+  ctx.clearRect(0, 0, stage.clientWidth, stage.clientHeight);
   ctx.lineWidth = 1;
 
-  // Faint guide paths so the loop reads between particles (rule 5).
-  guide(lanes.north, 0.22, !moving);
-  guide(lanes.south, 0.22, !moving);
-  guide(lanes.review, 0.22, false);
-  guide(lanes.train, 0.22, false);
-  guide(lanes.gate, 0.22, false);
-  guide(lanes.ctlDown, 0.2, false);
+  const shippedNorth = (S?.sites.north ?? "base") !== "base";
+  const shippedSouth = (S?.sites.south ?? "base") !== "base";
 
-  guide(lanes.ret, 0.22, false, document.body.dataset.shipped === "true");
+  for (const site of SITES) {
+    for (let seat = 0; seat < SEATS; seat++) {
+      guide(lanes[`seat-${site}-${seat}`], moving ? BLUE : RED, moving ? 0.07 : 0.12, !moving);
+    }
+  }
+
+  guide(lanes.review, BLUE, 0.2);
+  guide(lanes.train, BLUE, 0.2);
+  guide(lanes.gate, BLUE, 0.2);
+  guide(lanes.release, GREEN, 0.18);
+  guide(lanes["ret-north"], GREEN, shippedNorth ? 0.4 : 0.12);
+  guide(lanes["ret-south"], GREEN, shippedSouth ? 0.4 : 0.12);
+  guide(lanes.ctlDown, CTL, 0.18);
 
   for (let index = particles.length - 1; index >= 0; index--) {
     const particle = particles[index];
@@ -335,15 +422,19 @@ function draw(dt, moving) {
 
     particle.t += particle.speed * REDUCED * dt;
 
-    if (!lane || particle.t >= 1) { particles.splice(index, 1); continue; }
+    if (!lane || particle.t >= 1) {
+      if (lane && particle.arrive) particle.arrive();
+
+      particles.splice(index, 1);
+      continue;
+    }
 
     const point = along(lane, particle.t);
 
-    // Rule 3: light inside the source's own box, full strength after exiting.
-    // A dying particle dissipates before it reaches the idle edge wall.
     let fade = Math.sin(Math.PI * particle.t);
 
-    if (lane.kind === "curve" && lane.exit !== undefined && point.x < lane.exit) fade *= 0.4;
+    // Light inside the source's own card, full strength after exiting it.
+    if (lane.exit !== undefined && point.x < lane.exit) fade *= 0.6;
 
     // Dissipates AT the boundary: full strength to 60% of the lane, gone by 85%.
     if (particle.die) fade *= Math.min(1, Math.max(0, (0.85 - particle.t) / 0.25));
@@ -354,7 +445,7 @@ function draw(dt, moving) {
       const back = along(lane, Math.max(0, particle.t - 0.04));
 
       ctx.strokeStyle = particle.color;
-      ctx.globalAlpha = 0.22 * fade;
+      ctx.globalAlpha = 0.25 * fade;
       ctx.lineWidth = particle.size * 0.9;
       ctx.beginPath();
       ctx.moveTo(back.x + (lane.kind === "poly" ? particle.jitter : 0), back.y);
@@ -362,7 +453,7 @@ function draw(dt, moving) {
       ctx.stroke();
     }
 
-    ctx.globalAlpha = 0.85 * fade;
+    ctx.globalAlpha = 0.9 * fade;
     ctx.fillStyle = particle.color;
     ctx.beginPath();
     ctx.arc(x, point.y, particle.size, 0, Math.PI * 2);
@@ -371,6 +462,57 @@ function draw(dt, moving) {
 
   ctx.globalAlpha = 1;
   ctx.lineWidth = 1;
+}
+
+/* ----------------------------------------------------------------- ring */
+
+/** @param {import("./contracts").Round | undefined} round */
+function drawRing(round) {
+  const size = 120;
+  const dpr = window.devicePixelRatio || 1;
+
+  if (!(ringCanvas instanceof HTMLCanvasElement)) return;
+
+  ringCanvas.width = size * dpr;
+  ringCanvas.height = size * dpr;
+  rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  rctx.clearRect(0, 0, size, size);
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size / 2 - 9;
+  const start = -Math.PI / 2;
+
+  rctx.lineWidth = 9;
+  rctx.beginPath();
+  rctx.arc(cx, cy, r, 0, Math.PI * 2);
+  rctx.strokeStyle = "rgba(157, 180, 200, .18)";
+  rctx.stroke();
+
+  const base = round?.baseline;
+  const cand = round?.candidate;
+  const tone = round?.status === "passed" ? COLOR.ok : COLOR.err;
+
+  if (base && cand) {
+    rctx.beginPath();
+    rctx.arc(cx, cy, r, start, start + Math.max(0.02, base.passed / base.total) * Math.PI * 2);
+    rctx.strokeStyle = "rgba(157, 180, 200, .55)";
+    rctx.lineWidth = 9;
+    rctx.stroke();
+    rctx.beginPath();
+    rctx.arc(cx, cy, r - 1, start, start + Math.max(0.02, cand.passed / cand.total) * Math.PI * 2);
+    rctx.strokeStyle = tone;
+    rctx.lineWidth = 11;
+    rctx.stroke();
+  }
+
+  rctx.font = "13px ui-monospace, SFMono-Regular, Menlo, monospace";
+  rctx.textAlign = "center";
+  rctx.textBaseline = "middle";
+  rctx.fillStyle = cand ? tone : "#9db4c8";
+  rctx.fillText(cand ? `${cand.passed}/${cand.total}` : "gate", cx, cy - 8);
+  rctx.fillStyle = "#9db4c8";
+  rctx.fillText(base ? `was ${base.passed}/${base.total}` : "pending", cx, cy + 9);
 }
 
 /* --------------------------------------------------------------- render */
@@ -390,19 +532,19 @@ function review(records) {
   element("review-loading").hidden = true;
   element("review-form").hidden = !current;
   element("review-empty").hidden = Boolean(current);
-  text("pending", `${pending.length} waiting`);
+  text("pending", pending.length ? `${pending.length} waiting` : "queue empty");
   element("stage-review").dataset.queue = String(pending.length);
+  element("stage-review").dataset.live = String(pending.length > 0);
 
   if (!current) {
     selectedId = "";
-    text("review-empty", records.some((record) => record.status === "grading")
-      ? "teacher is grading" : "nothing waiting on a person");
+    text("review-empty", records.some((record) => record.status === "grading") ? "teacher is grading" : "nothing waiting on a person");
 
     return;
   }
 
-  text("review-id", current.id);
-  text("confidence", `${Math.round(current.teacher.confidence * 100)}% TEACHER CONFIDENCE`);
+  text("review-id", `${current.site} · ${current.id}`);
+  text("confidence", `${Math.round(current.teacher.confidence * 100)}% CONFIDENCE`);
   text("prompt", current.prompt);
   text("answer", current.answer);
   text("rationale", current.teacher.rationale);
@@ -414,56 +556,137 @@ function review(records) {
   }
 }
 
-/** @param {import("./contracts").Round[]} history */
-function rounds(history) {
+/** @param {string} id @param {boolean[]} passes */
+function cells(id, passes) {
+  const holder = element(id);
+
+  holder.replaceChildren();
+
+  for (let index = 0; index < 8; index++) {
+    const cell = document.createElement("i");
+
+    if (index < passes.length) cell.dataset.pass = String(passes[index]);
+
+    holder.append(cell);
+  }
+}
+
+/** @param {import("./contracts").Round[]} history @param {string} trainingStatus */
+function rounds(history, trainingStatus) {
   const latest = history[history.length - 1];
   const gate = element("stage-gate");
+  const improvement = element("improvement");
+  const list = element("rounds");
 
-  if (!latest) {
-    gate.dataset.result = "";
-    pill("pill-release", "off");
-
-    return;
-  }
-
-  gate.dataset.result = latest.status;
-  text("gate-state", latest.reason);
-  pill("pill-release", latest.status === "passed" ? "on" : "warn");
+  gate.dataset.result = latest?.status ?? "";
+  gate.dataset.live = String(trainingStatus === "evaluating");
+  improvement.dataset.result = latest?.status ?? "";
 
   if (history.length !== lastRound) {
-    if (lastRound > 0) {
-      if (latest.status === "passed") burst("ret", 36, COLOR.ok, { speed: SPEED.ret, size: 3.4 });
+    if (lastRound >= 0 && latest) {
+      if (latest.status === "passed") burst("release", 36, COLOR.ok, { speed: SPEED.gate, size: 3.4 });
       else burst("reject", 22, COLOR.err, { speed: 1.3, size: 2.6, die: true });
     }
 
     lastRound = history.length;
   }
 
+  list.replaceChildren();
+
+  if (!latest) {
+    const empty = document.createElement("li");
+
+    empty.className = "empty";
+    empty.textContent = "base model at both sites · nothing has shipped";
+    list.append(empty);
+  }
+
+  for (const round of history.slice(-4).reverse()) {
+    const row = document.createElement("li");
+    const name = document.createElement("b");
+    const detail = document.createElement("span");
+    const tag = document.createElement("span");
+
+    row.dataset.result = round.status;
+    name.textContent = round.version ?? "round";
+    detail.textContent = round.baseline && round.candidate
+      ? `${round.baseline.passed}/${round.baseline.total} → ${round.candidate.passed}/${round.candidate.total}`
+      : round.reason;
+    tag.className = "tag";
+    tag.textContent = round.status === "passed" ? "SHIPPED" : "HELD";
+    row.append(name, detail, tag);
+    list.append(row);
+  }
+
   const evaluated = history.findLast((round) => round.baseline);
 
+  drawRing(evaluated);
+
   if (!evaluated?.baseline || !evaluated.candidate) {
-    text("gate-score", latest.status === "passed" ? "PASS" : "REJECTED");
-    text("gate-label", latest.status === "passed" ? "release allowed" : "sites unchanged");
+    text("gate-score", latest ? (latest.status === "passed" ? "PASS" : "HELD") : "–");
+    text("gate-meta", latest ? latest.reason : "candidate must beat the current model");
+    text("delta", "—");
+    text("verdict", latest ? (latest.status === "passed" ? "released" : "held · sites unchanged") : "no round yet");
+    text("verdict-sub", latest ? latest.reason : "first gate runs after 12 approvals");
+    cells("checks-base", []);
+    cells("checks-cand", []);
 
     return;
   }
 
-  text("gate-score", `${evaluated.baseline.passed}/${evaluated.baseline.total} → ${evaluated.candidate.passed}/${evaluated.candidate.total}`);
-  text("gate-label", evaluated.status === "passed" ? "candidate wins · ships" : "no improvement · stays");
+  const base = evaluated.baseline;
+  const cand = evaluated.candidate;
+  const gained = cand.passed - base.passed;
 
-  const before = evaluated.baseline.outputs;
-  const after = evaluated.candidate.outputs;
-  const changed = before.findIndex((record, index) => !record.pass && after[index].pass);
+  text("gate-score", `${cand.passed}/${cand.total}`);
+  text("gate-label", "PASSED");
+  text("gate-meta", `current model ${base.passed}/${base.total} · ${evaluated.status === "passed" ? "candidate wins, ships canary first" : "no improvement, sites unchanged"}`);
+  text("delta", `${gained >= 0 ? "+" : ""}${gained}`);
+  text("verdict", evaluated.status === "passed" ? `${evaluated.version ?? "candidate"} released` : "candidate held");
+  text("verdict-sub", evaluated.reason);
+  cells("checks-base", base.outputs.map((output) => output.pass));
+  cells("checks-cand", cand.outputs.map((output) => output.pass));
+
+  const changed = base.outputs.findIndex((record, index) => !record.pass && cand.outputs[index].pass);
   const index = changed < 0 ? 0 : changed;
 
-  text("eval-prompt", before[index].prompt);
-  text("before", before[index].answer);
-  text("after", after[index].answer);
+  text("eval-prompt", base.outputs[index].prompt);
+  text("before", base.outputs[index].answer);
+  text("after", cand.outputs[index].answer);
+}
+
+/** @param {import("./contracts").Transcript[]} records */
+function feed(records) {
+  const list = element("feed");
+
+  if (list.matches(":hover") || records.length === 0) return;
+
+  list.replaceChildren();
+
+  for (const record of records.slice(-9).reverse()) {
+    const row = document.createElement("li");
+    const site = document.createElement("span");
+    const kind = document.createElement("span");
+    const body = document.createElement("span");
+    const status = document.createElement("span");
+
+    row.dataset.status = record.status;
+    site.className = "site-tag";
+    site.textContent = record.site.toUpperCase();
+    kind.className = "kind";
+    kind.textContent = record.kind;
+    body.className = "text";
+    body.textContent = record.prompt;
+    status.className = "status";
+    status.textContent = record.status === "pending" ? "NEEDS A PERSON" : record.status.toUpperCase();
+    row.append(site, kind, body, status);
+    list.append(row);
+  }
 }
 
 /** @param {import("./contracts").ReceiptEvent[]} history */
 function events(history) {
-  const feed = element("events");
+  const list = element("events");
 
   if (history.length === 0) return;
 
@@ -471,19 +694,33 @@ function events(history) {
     for (const event of history) {
       if (event.seq <= latestEvent) continue;
 
-      if (event.stage === "collect") burst(event.message.includes("south") ? "south" : "north", 10, COLOR.conv, { speed: SPEED.site, size: 3.2 });
-      else if (event.stage === "teacher") burst("review", 6, COLOR.conv, { speed: SPEED.stage });
-      else if (event.stage === "review" && event.message.includes("approved")) burst("train", 8, COLOR.conv, { speed: SPEED.stage });
-      else if (event.stage === "training") burst("gate", 12, COLOR.conv, { speed: SPEED.train });
-      else if (event.stage === "rollout" && event.message.includes("activated")) burst("ret", 18, COLOR.ok, { speed: SPEED.ret, size: 3.4 });
+      if (event.stage === "collect") {
+        const site = event.message.includes("south") ? "south" : "north";
+        const seat = seatNumber(event.message + event.seq);
+
+        burst(`cust-${site}-${seat}`, 6, COLOR.conv, { speed: SPEED.customer, size: 2.4, trail: false, arrive: () => seatBusy(site, seat) });
+        burst(`seat-${site}-${seat}`, 12, COLOR.conv, { speed: SPEED.seat, size: 3.4 });
+      } else if (event.stage === "teacher") {
+        burst("review", 6, COLOR.conv, { speed: SPEED.spine });
+      } else if (event.stage === "review" && event.message.includes("approved")) {
+        burst("train", 8, COLOR.conv, { speed: SPEED.spine });
+      } else if (event.stage === "training") {
+        burst("gate", 12, COLOR.conv, { speed: SPEED.spine });
+      } else if (event.stage === "rollout" && event.message.includes("activated")) {
+        const site = event.message.includes("south") ? "south" : "north";
+
+        burst(`ret-${site}`, 20, COLOR.ok, { speed: SPEED.ret, size: 3.4 });
+        element(`site-${site}`).classList.add("gain");
+        setTimeout(() => element(`site-${site}`).classList.remove("gain"), 1500);
+      }
     }
   }
 
-  if (feed.matches(":hover")) return;
+  if (list.matches(":hover")) return;
 
-  feed.replaceChildren();
+  list.replaceChildren();
 
-  for (const event of history.slice(0, 7)) {
+  for (const event of history.slice(0, 8)) {
     const row = document.createElement("li");
     const tag = document.createElement("span");
 
@@ -494,72 +731,186 @@ function events(history) {
 
     if (event.seq > latestEvent && latestEvent > 0) row.classList.add("fresh");
 
-    feed.append(row);
+    list.append(row);
   }
 
   latestEvent = history[0].seq;
 }
 
-/** @param {import("./contracts").State} state */
-function render(state) {
-  const records = state.records;
-  const shipped = state.sites.north !== "base" && state.sites.south !== "base";
+/** @param {"north" | "south"} site @param {import("./contracts").State} full */
+function renderSite(site, full) {
+  const mine = full.records.filter((record) => record.site === site);
+  const refunds = mine.filter((record) => record.kind === "refund").length;
+  const bookings = mine.length - refunds;
+  const card = element(`site-${site}`);
+  const version = full.sites[site];
+  const last = mine[mine.length - 1];
 
-  text("received", records.length);
-  text("graded", records.filter((record) => record.teacher).length);
-  text("review-count", records.filter((record) => record.status === "pending").length);
-  text("north-version", state.sites.north);
-  text("south-version", state.sites.south);
-  element("site-north").dataset.version = state.sites.north === "base" ? "base" : "adapter";
-  element("site-south").dataset.version = state.sites.south === "base" ? "base" : "adapter";
-  element("return-label").dataset.state = state.sites.north === "base" ? "off" : "on";
-  document.body.dataset.shipped = String(shipped);
+  text(`${site}-count`, mine.length);
+  text(`${site}-version`, version);
+  card.dataset.version = version === "base" ? "base" : "adapter";
 
-  // A presenter started before this field existed reports no Cloud counts; the
-  // board then runs on local receipts alone instead of crashing the render.
-  const cloud = state.cloud ?? { running: 0, total: 0 };
+  const bars = element(`${site}-kinds`).querySelectorAll("i b");
 
-  text("cloud-jobs", cloud.total ? `jobs · ${cloud.running}/${cloud.total} running` : "jobs · status unavailable");
-  pill("pill-cloud", !cloud.total ? "off" : cloud.running === cloud.total ? "on" : cloud.running ? "warn" : "err");
-  pill("pill-teacher", records.some((record) => record.status === "grading") ? "warn" : records.some((record) => record.teacher) ? "on" : "off");
+  bars.forEach((bar, index) => {
+    if (bar instanceof HTMLElement) bar.style.width = mine.length ? `${((index ? bookings : refunds) / mine.length) * 100}%` : "0%";
+  });
 
-  const training = state.training;
+  const lastNode = element(`${site}-last`);
+
+  lastNode.replaceChildren();
+
+  if (last) {
+    const kind = document.createElement("b");
+
+    kind.textContent = last.kind;
+    lastNode.append("last: ", kind, ` · ${last.id} · ${last.version}`);
+  } else {
+    lastNode.textContent = "awaiting the first customer";
+  }
+
+  if (version !== lastSites[site] && version !== "base") burst(`ret-${site}`, 16, COLOR.ok, { speed: SPEED.ret, size: 3.4 });
+
+  const canary = element(`canary-${site}`);
+  const label = canary.lastChild;
+
+  setState(`canary-${site}`, version === "base" ? (full.rollback ? "rollback" : "off") : "on");
+
+  if (label) label.textContent = ` ${site} · ${version}`;
+}
+
+/** @param {import("./contracts").State} full */
+function renderTeacher(full) {
+  const records = full.records;
+  const graded = records.filter((record) => record.teacher).length;
+  const approved = records.filter((record) => record.status === "approved").length;
+  const pending = records.filter((record) => record.status === "pending").length;
+  const grading = records.filter((record) => record.status === "grading").length;
+  const total = Math.max(1, approved + pending + grading);
+  const parts = { pass: approved, person: pending, grading };
+
+  text("graded", graded);
+  element("stage-teacher").dataset.live = String(grading > 0);
+  element("teacher-split").querySelectorAll("i").forEach((bar) => {
+    if (!(bar instanceof HTMLElement)) return;
+
+    const part = bar.dataset.part === "pass" ? parts.pass : bar.dataset.part === "person" ? parts.person : parts.grading;
+
+    bar.style.width = `${Math.max(part ? 6 : 0, (part / total) * 100)}%`;
+  });
+  text("teacher-split-label", graded ? `${approved} ready · ${pending} need a person · ${grading} grading` : "no verdicts yet");
+  text("review-count", pending);
+
+  const queue = element("queue");
+  const chips = document.createElement("div");
+  const label = document.createElement("span");
+
+  chips.className = "chips";
+
+  for (const record of records) {
+    if (record.status !== "approved" && record.status !== "pending") continue;
+
+    const chip = document.createElement("i");
+
+    if (record.status === "pending") chip.className = "pending";
+
+    chips.append(chip);
+  }
+
+  label.id = "approved-label";
+  label.textContent = `${approved} approved for training · needs 12`;
+  queue.replaceChildren(chips, label);
+}
+
+/** @param {import("./contracts").State} full */
+function renderTraining(full) {
+  const training = full.training;
+  const approved = full.records.filter((record) => record.status === "approved").length;
+  const bar = element("train-bar");
+  const steps = Math.max(1, training.steps);
+
+  element("stage-train").dataset.live = String(["training", "starting", "evaluating"].includes(training.status));
 
   if (training.status === "training") {
     text("train-step", `${training.step}/${training.steps}`);
-    text("train-label", "LoRA steps · this Mac");
-    pill("pill-training", "warn");
+    text("train-label", "STEPS");
+    text("train-meta", `LoRA on ${approved} approved conversations · this Mac`);
+    bar.style.width = `${(training.step / steps) * 100}%`;
+    text("train-pct", `${Math.round((training.step / steps) * 100)}%`);
   } else if (training.status === "idle") {
     text("train-step", "–");
-    text("train-label", `LoRA · ${records.filter((record) => record.status === "approved").length} approved waiting`);
-    pill("pill-training", "off");
+    text("train-label", "STEPS");
+    text("train-meta", approved >= 12 ? "batch ready · next scheduled trigger starts the run" : `needs 12 approved conversations · ${approved} so far`);
+    bar.style.width = "0%";
+    text("train-pct", "idle");
   } else {
     text("train-step", training.status.toUpperCase());
-    text("train-label", "LoRA · this Mac");
-    pill("pill-training", ["passed", "rejected"].includes(training.status) ? "on" : "warn");
+    text("train-label", "RUN");
+    text("train-meta", training.version ? `${training.version} · this Mac` : "this Mac");
+    bar.style.width = ["passed", "rejected", "evaluating"].includes(training.status) ? "100%" : "0%";
+    text("train-pct", training.status);
   }
 
-  if (lastTraining !== "training" && training.status === "training") burst("gate", 10, COLOR.conv, { speed: SPEED.train });
+  if (lastTraining !== "training" && training.status === "training") burst("gate", 10, COLOR.conv, { speed: SPEED.spine });
 
   lastTraining = training.status;
+}
 
-  if (state.sites.north !== lastSites.north && state.sites.north !== "base") burst("ret", 14, COLOR.ok, { speed: SPEED.ret, size: 3.4 });
+/** @param {import("./contracts").State} full */
+function renderBadge(full) {
+  const badge = element("state-badge");
+  const records = full.records;
+  const pending = records.filter((record) => record.status === "pending").length;
+  const grading = records.filter((record) => record.status === "grading").length;
+  const shipped = full.sites.north !== "base" && full.sites.south !== "base";
+  const latest = full.rounds[full.rounds.length - 1];
 
-  lastSites = { ...state.sites };
+  /** @type {[string, string]} */
+  const [tone, label] = full.training.status === "training" ? ["busy", "TRAINING"]
+    : grading > 0 ? ["busy", "GRADING"]
+      : pending > 0 ? ["busy", "AWAITING A PERSON"]
+        : shipped ? ["live", `${full.sites.north} LIVE`]
+          : latest?.status === "rejected" ? ["live", "HELD · BASE LIVE"]
+            : ["live", "COLLECTING"];
+
+  setState("state-badge", tone);
+  badge.textContent = label;
+}
+
+/** @param {import("./contracts").State} full */
+function render(full) {
+  const shipped = full.sites.north !== "base" && full.sites.south !== "base";
+  const cloud = full.cloud ?? { running: 0, total: 0 };
+
+  document.body.dataset.shipped = String(shipped);
+  renderSite("north", full);
+  renderSite("south", full);
+  lastSites = { ...full.sites };
+
+  text("cloud-jobs", cloud.total ? `${cloud.total} jobs · ${cloud.running} running` : "job status unavailable · local receipts only");
+  text("orchestrated", cloud.total ? `EXPANSO CLOUD · ${cloud.running}/${cloud.total} JOBS RUNNING` : "EXPANSO CLOUD · STATUS UNAVAILABLE");
+  element("node-edge").querySelectorAll(".pipes i").forEach((pipe) => {
+    if (pipe instanceof HTMLElement) pipe.dataset.on = String(cloud.total > 0 && cloud.running === cloud.total);
+  });
+
+  renderTeacher(full);
+  renderTraining(full);
 
   const edge = element("node-edge");
   const why = element("edge-why");
 
-  edge.classList.toggle("disabled", !live());
+  edge.dataset.running = String(live());
   why.hidden = live();
-  why.textContent = cloud.total && cloud.running === 0 ? "NO JOBS RUNNING — scheduled from Expanso Cloud; conversations keep arriving, nothing is graded" : "";
+  why.textContent = cloud.total && cloud.running === 0 ? "NO JOBS RUNNING — scheduled from Expanso Cloud; customers keep writing in, nothing is graded" : "";
 
   text("before-title", shipped ? "BEFORE · BASE" : "CURRENT");
-  text("after-title", shipped ? `AFTER · ${state.sites.north}` : "CANDIDATE");
+  text("after-title", shipped ? `AFTER · ${full.sites.north}` : "CANDIDATE");
 
-  review(records);
-  rounds(state.rounds);
-  events(state.events);
+  renderBadge(full);
+  review(full.records);
+  rounds(full.rounds, full.training.status);
+  feed(full.records);
+  events(full.events);
   layout();
 }
 
@@ -570,20 +921,23 @@ async function poll() {
     if (!response.ok) throw new Error("Local training node is unavailable");
 
     /** @type {import("./contracts").State} */
-    const state = await response.json();
+    const full = await response.json();
 
-    S = state;
+    S = full;
     connected = true;
-    pill("pill-node", "on");
-    render(state);
+    document.body.dataset.state = full.training.status === "training" ? "busy" : "live";
+    render(full);
   } catch {
     connected = false;
-    pill("pill-node", "err");
+    document.body.dataset.state = "down";
+    setState("state-badge", "down");
+    element("state-badge").textContent = "STANDBY";
+    text("orchestrated", "TRAINING NODE UNREACHABLE");
     element("review-loading").hidden = true;
     element("review-empty").hidden = false;
     element("edge-why").hidden = false;
-    element("edge-why").textContent = "TRAINING NODE UNREACHABLE — conversations keep arriving at the sites";
-    element("node-edge").classList.add("disabled");
+    element("edge-why").textContent = "TRAINING NODE UNREACHABLE — customers keep writing in at both floors";
+    element("node-edge").dataset.running = "false";
   } finally {
     setTimeout(poll, POLL_MS);
   }
@@ -611,7 +965,7 @@ element("review-form").addEventListener("submit", async (event) => {
 
     if (!response.ok) throw new Error(result.error || "Approval failed");
 
-    burst("train", 10, COLOR.conv, { speed: SPEED.stage });
+    burst("train", 10, COLOR.conv, { speed: SPEED.spine });
     selectedId = "";
     element("review-form").hidden = true;
   } catch (error) {
@@ -623,6 +977,8 @@ element("review-form").addEventListener("submit", async (event) => {
 });
 
 resize();
+
+drawRing(undefined);
 
 requestAnimationFrame(frame);
 

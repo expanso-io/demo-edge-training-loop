@@ -3,89 +3,173 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Train where the conversations happen</title>
+<title>Expanso Edge · Local learning loop</title>
 <link rel="stylesheet" href="styles.css">
 <script src="app.js" defer></script>
 </head>
-<body>
-<a class="skip-link" href="#topology">Skip to the learning loop</a>
+<body data-state="down" data-shipped="false">
+<a class="skip-link" href="#feed">Skip to conversations</a>
+
 <header>
-  <span class="logochip"><img src="expanso-logo.png" alt="Expanso"></span>
-  <span class="sub">TRAIN WHERE THE CONVERSATIONS HAPPEN &middot; SITES &rarr; TEACHER &rarr; PERSON &rarr; GATE &rarr; SITES</span>
-  <div class="pills">
-    <span class="pill" id="pill-node" data-state="off">NODE</span>
-    <span class="pill" id="pill-cloud" data-state="off">CLOUD</span>
-    <span class="pill" id="pill-teacher" data-state="off">TEACHER</span>
-    <span class="pill" id="pill-training" data-state="off">TRAINING</span>
-    <span class="pill" id="pill-release" data-state="off">RELEASE</span>
+  <div class="brand">
+    <strong>EXPANSO EDGE</strong>
+    <span class="sub">LOCAL LEARNING LOOP &middot; TEXT SUPPORT &middot; SYNTHETIC</span>
   </div>
+  <p class="orchestrated" id="orchestrated">CONNECTING TO TRAINING NODE</p>
+  <output id="state-badge" data-state="down">STANDBY</output>
 </header>
 
 <main>
-  <section class="topology" id="topology" aria-label="Learning loop">
+  <!-- The stage. DOM owns the cards so text stays crisp; the flow canvas
+       overlays the whole stage and owns only the particles, anchored to
+       seats, stage rows and card walls. -->
+  <section class="stage" id="stage">
     <canvas id="flow" aria-hidden="true"></canvas>
+    <div class="boundary" id="boundary" aria-hidden="true"><span>CUSTOMER ENVIRONMENT &middot; CONVERSATIONS AND MODELS STAY HERE</span></div>
 
-    <div class="node node-orch" id="node-orch" data-flow="orchestrator">
-      <h2><img class="mark" src="expanso-mark.png" alt=""> EXPANSO CLOUD</h2>
-      <p class="dim" id="cloud-jobs">jobs &middot; checking</p>
-      <p class="dim">control only &middot; no conversation leaves</p>
-    </div>
+    <div class="sites-col">
+      <div class="col-head"><span class="kicker">AGENT SITES</span><span class="col-sub">customers write in</span></div>
 
-    <div class="boundary" id="boundary" aria-hidden="true">
-      <span>CUSTOMER ENVIRONMENT &middot; CONVERSATIONS AND MODELS STAY HERE</span>
-    </div>
-
-    <div class="node node-sites" id="node-sites" data-flow="source">
-      <h2>AGENT SITES</h2>
-      <div class="site" id="site-north"><b>north</b><code id="north-version">base</code></div>
-      <div class="site" id="site-south"><b>south</b><code id="south-version">base</code></div>
-      <div class="big"><span id="received">0</span><small> transcripts</small></div>
-    </div>
-
-    <div class="node node-edge" id="node-edge" data-flow="edge">
-      <h2><img class="mark" src="expanso-mark.png" alt=""> EXPANSO EDGE &middot; TRAINING NODE</h2>
-      <div class="stages">
-        <div class="stage" id="stage-teacher"><span>TEACHER</span><b id="graded">0</b><i>graded</i></div>
-        <div class="stage" id="stage-review"><span>REVIEW</span><b id="review-count">0</b><i>awaiting a person</i></div>
-        <div class="stage" id="stage-train"><span>TRAIN</span><b id="train-step">&ndash;</b><i id="train-label">LoRA &middot; idle</i></div>
-        <div class="stage" id="stage-gate"><span>GATE</span><b id="gate-score">&ndash;</b><i id="gate-label">held-out &middot; 8 checks</i></div>
+      <div class="card site" id="site-north" data-site="north" data-version="base">
+        <div class="site-head">
+          <div><span class="kicker">SITE &middot; NORTH</span><h2>North support floor</h2></div>
+          <span class="version"><svg class="icon" aria-hidden="true"><use href="icons.svg#package"/></svg><b id="north-version">base</b></span>
+        </div>
+        <div class="floor" id="floor-north">
+          <div class="seat" data-seat="0"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-1</span></div>
+          <div class="seat" data-seat="1"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-2</span></div>
+          <div class="seat" data-seat="2"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-3</span></div>
+          <div class="seat" data-seat="3"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-4</span></div>
+        </div>
+        <div class="site-nums">
+          <div><b id="north-count">0</b><small>CONVERSATIONS</small></div>
+          <div class="kinds" id="north-kinds"><i data-kind="refund"><b></b></i><i data-kind="booking"><b></b></i><small>refunds &middot; bookings</small></div>
+          <div class="last" id="north-last">awaiting the first customer</div>
+        </div>
       </div>
-      <p class="why" id="edge-why" hidden></p>
+
+      <div class="card site" id="site-south" data-site="south" data-version="base">
+        <div class="site-head">
+          <div><span class="kicker">SITE &middot; SOUTH</span><h2>South support floor</h2></div>
+          <span class="version"><svg class="icon" aria-hidden="true"><use href="icons.svg#package"/></svg><b id="south-version">base</b></span>
+        </div>
+        <div class="floor" id="floor-south">
+          <div class="seat" data-seat="0"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-1</span></div>
+          <div class="seat" data-seat="1"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-2</span></div>
+          <div class="seat" data-seat="2"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-3</span></div>
+          <div class="seat" data-seat="3"><svg class="icon" aria-hidden="true"><use href="icons.svg#message"/></svg><span>agent-4</span></div>
+        </div>
+        <div class="site-nums">
+          <div><b id="south-count">0</b><small>CONVERSATIONS</small></div>
+          <div class="kinds" id="south-kinds"><i data-kind="refund"><b></b></i><i data-kind="booking"><b></b></i><small>refunds &middot; bookings</small></div>
+          <div class="last" id="south-last">awaiting the first customer</div>
+        </div>
+      </div>
     </div>
 
-    <div class="lane-label" id="return-label">ADAPTER RETURNS &middot; NORTH FIRST</div>
+    <div class="node-col">
+      <div class="card orchestrator" id="node-orch">
+        <span class="kicker">EXPANSO CLOUD</span>
+        <h2>Orchestrator</h2>
+        <p class="meta" id="cloud-jobs">checking jobs</p>
+        <p class="note">schedules the loop &middot; sees zero conversations</p>
+      </div>
+
+      <div class="card edge" id="node-edge">
+        <div class="edge-head">
+          <img class="logo" src="expanso-logo.png" alt="Expanso">
+          <div><span class="kicker">EDGE NODE &middot; TRAINING</span><h2>training node &middot; this Mac</h2></div>
+        </div>
+        <span class="pipes"><i data-pipe="collect-north">collect-north</i><i data-pipe="collect-south">collect-south</i><i data-pipe="teacher">teacher</i><i data-pipe="training-trigger">training-trigger</i><i data-pipe="rollout-north">rollout-north</i><i data-pipe="rollout-south">rollout-south</i></span>
+        <p class="why" id="edge-why" hidden></p>
+
+        <div class="stages">
+          <div class="row" id="stage-teacher" data-live="false">
+            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#search"/></svg></span>
+            <div class="what"><span class="kicker">TEACHER</span><h3>grades every answer</h3><p class="meta">mistral-small 24B &middot; proposes a correction</p></div>
+            <div class="num"><b id="graded">0</b><small>GRADED</small></div>
+            <div class="bars split" id="teacher-split" aria-label="Teacher verdicts"><div class="track"><i data-part="pass"></i><i data-part="person"></i><i data-part="grading"></i></div><span id="teacher-split-label">&mdash;</span></div>
+          </div>
+
+          <div class="row" id="stage-review" data-live="false">
+            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#users"/></svg></span>
+            <div class="what"><span class="kicker">HUMAN CHECK</span><h3>pauses uncertain calls</h3><p class="meta">under 0.98 confidence, or a policy miss</p></div>
+            <div class="num warn"><b id="review-count">0</b><small>WAITING</small></div>
+            <div class="bars queue" id="queue" aria-label="Approved for training"><span id="approved-label">0 approved for training</span></div>
+          </div>
+
+          <div class="row" id="stage-train" data-live="false">
+            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#bolt"/></svg></span>
+            <div class="what"><span class="kicker">LoRA TRAIN</span><h3>fine-tunes the 135M student</h3><p class="meta" id="train-meta">needs 12 approved conversations to start</p></div>
+            <div class="num"><b id="train-step">&ndash;</b><small id="train-label">STEPS</small></div>
+            <div class="bars progress" aria-label="Training progress"><i><b id="train-bar"></b></i><span id="train-pct">idle</span></div>
+          </div>
+
+          <div class="row" id="stage-gate" data-live="false" data-result="">
+            <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#check-circle"/></svg></span>
+            <div class="what"><span class="kicker">GATE</span><h3>8 held-out requests</h3><p class="meta" id="gate-meta">ships only if it beats the current model</p></div>
+            <div class="num"><b id="gate-score">&ndash;</b><small id="gate-label">GATE</small></div>
+            <div class="bars checks" aria-label="Held-out policy checks">
+              <div class="checkrow"><em>current</em><span id="checks-base"></span></div>
+              <div class="checkrow"><em>candidate</em><span id="checks-cand"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="release-col">
+      <div class="col-head"><span class="kicker ok">RELEASE</span><span class="col-sub">canary first</span></div>
+
+      <div class="card improvement" id="improvement">
+        <canvas id="ring" width="120" height="120" aria-label="Held-out checks passed by the candidate against the current model"></canvas>
+        <div class="delta"><span id="delta">&mdash;</span><small>CHECKS GAINED</small></div>
+        <div class="verdict"><span id="verdict">no round yet</span><small id="verdict-sub">first gate runs after 12 approvals</small></div>
+      </div>
+
+      <div class="card ladder" id="ladder">
+        <span class="kicker">VERSIONS</span>
+        <ol id="rounds"><li class="empty">base model at both sites &middot; nothing has shipped</li></ol>
+        <div class="canary"><span id="canary-north"><svg class="icon" aria-hidden="true"><use href="icons.svg#clock"/></svg> north</span><span id="canary-south"><svg class="icon" aria-hidden="true"><use href="icons.svg#clock"/></svg> south</span></div>
+      </div>
+
+      <div class="card answers" id="comparison">
+        <span class="kicker">SAME HELD-OUT REQUEST</span>
+        <p class="prompt" id="eval-prompt">answers appear after the first gate</p>
+        <div class="pair">
+          <section><h4 id="before-title">CURRENT</h4><p id="before" class="old">&ndash;</p></section>
+          <section><h4 id="after-title">CANDIDATE</h4><p id="after">&ndash;</p></section>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section class="panels">
-    <div class="panel shelf">
-      <h3>ARRIVING NOW &mdash; local receipts</h3>
-      <ul class="feed" id="events"><li class="empty">awaiting the first transcript</li></ul>
+    <div class="panel transcripts">
+      <header class="panel-head"><h3>Conversations received</h3><span class="hint">hover a row to read it whole</span></header>
+      <ol class="feed" id="feed" tabindex="0"><li class="empty">awaiting the first transcript &middot; the sites keep answering customers either way</li></ol>
     </div>
 
     <div class="panel review">
-      <h3>THE HUMAN CALL</h3>
+      <header class="panel-head"><h3>The human call</h3><span class="hint" id="pending">&mdash;</span></header>
       <div id="review-loading" class="skeleton" aria-label="Loading review queue"></div>
       <p id="review-empty" class="empty" hidden>nothing waiting on a person</p>
       <form id="review-form" hidden>
         <div class="review-meta"><code id="review-id"></code><span class="pill" id="confidence" data-state="warn"></span></div>
-        <p class="quote" id="prompt"></p>
-        <p class="quote old" id="answer"></p>
-        <p class="rationale" id="rationale"></p>
-        <label for="target">Teacher correction &middot; edit if needed</label>
-        <textarea id="target" rows="3" maxlength="2000" required></textarea>
-        <div class="review-actions"><button type="submit" id="approve">Approve for training</button><span id="pending"></span></div>
-        <p id="review-error" role="alert"></p>
+        <dl>
+          <dt>customer</dt><dd class="quote" id="prompt"></dd>
+          <dt>current answer</dt><dd class="quote old" id="answer"></dd>
+          <dt>teacher</dt><dd class="rationale" id="rationale"></dd>
+        </dl>
+        <label for="target">correction &middot; edit if needed</label>
+        <textarea id="target" rows="2" maxlength="2000" required></textarea>
+        <div class="review-actions"><button type="submit" id="approve">Approve for training</button><p id="review-error" role="alert"></p></div>
       </form>
     </div>
 
-    <div class="panel answers" id="comparison">
-      <h3>SAME HELD-OUT REQUEST</h3>
-      <p class="prompt" id="eval-prompt">answers appear after the held-out evaluation</p>
-      <div class="pair">
-        <section><h4 id="before-title">CURRENT</h4><p id="before" class="old">&ndash;</p></section>
-        <section><h4 id="after-title">CANDIDATE</h4><p id="after">&ndash;</p></section>
-      </div>
-      <p class="verdict" id="gate-state"></p>
+    <div class="panel receipts">
+      <header class="panel-head"><h3>Receipts</h3><span class="hint">local &middot; newest first</span></header>
+      <ol class="events" id="events"><li class="empty">awaiting the first receipt</li></ol>
     </div>
   </section>
 </main>

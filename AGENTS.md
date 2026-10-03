@@ -5,8 +5,9 @@ them. Build order: claim → beat script → components on the showcase →
 port the winners here → `just check`.
 
 - The claim: **Train where the data lives: the sites collect, a local teacher grades, people approve the hard calls, and only a model that beats the last one ships back** — every element on screen serves it or gets cut.
-- Palette: stamped **light** (declared as `color-scheme` in
-  `dashboard/styles.css`). Neither dark nor light is the default — palette
+- Palette: **dark** (declared as `color-scheme` in `dashboard/styles.css`);
+  re-chosen on 2026-10-02 to match the Space Force reference: the board is
+  a standalone ops instrument, not an embedded light host. Neither dark nor light is the default — palette
   follows the subject and the host it lives in (`../AGENTS.md` → Theme). If
   this demo should be the other one, re-stamp with `--palette` rather than
   hand-flipping colours; the linter checks the ground agrees with the

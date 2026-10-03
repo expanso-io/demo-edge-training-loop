@@ -21,7 +21,7 @@ review step and a release gate. This take shows the text-model portion.
 
 ## Capture surface
 
-http://localhost:8024 in Opera, light view, 1440 pixels wide. The flow diagram is
+http://localhost:8024 in Opera, dark view, 1440 pixels wide. The flow diagram is
 the hero; keep the customer boundary, site versions and gate visible. Mobile
 400-pixel screenshots are available, but the main take is landscape. The board
 is never publicly hosted. Show the signed-in Cloud console separately if needed.

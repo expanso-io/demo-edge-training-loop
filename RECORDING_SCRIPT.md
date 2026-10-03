@@ -8,7 +8,7 @@ them, people approve the hard calls, and only an improved model ships back.
 ## Before the take
 
 Read `RECORDING_PREFLIGHT.md`. Run its manual Cloud console checks. Use Opera
-at http://localhost:8024, light view, 1440 pixels wide. The mobile board also
+at http://localhost:8024, dark view, 1440 pixels wide. The mobile board also
 works at 400 pixels, but record the full loop in landscape.
 
 A full learning pass takes several minutes. Capture it honestly, then cut the
