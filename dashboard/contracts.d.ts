@@ -52,7 +52,7 @@ export interface State {
   records: Transcript[];
   events: ReceiptEvent[];
   mode: string;
-  cloud: Cloud;
+  cloud?: Cloud;
   sites: { north: string; south: string };
   rounds: Round[];
   training: Training;
