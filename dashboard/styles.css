@@ -89,7 +89,7 @@ header output[data-state="down"] { color: var(--text-dim); }
 .stage {
   position: relative; display: grid;
   grid-template-columns: 380px minmax(0, 1fr) 330px;
-  gap: 14px 96px; padding: 20px 3vw 18px; align-items: start;
+  gap: 14px 96px; padding: 20px 3vw 60px; align-items: start;
 }
 #flow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
 .sites-col, .node-col, .release-col { position: relative; z-index: 1; min-width: 0; display: grid; gap: 14px; align-content: start; }

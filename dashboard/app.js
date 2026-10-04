@@ -138,7 +138,7 @@ function layout() {
   const edgeIn = at("node-edge", "left");
   const teacher = at("stage-teacher", "center");
   const stacked = at("node-edge", "top").y > at("site-south", "bottom").y;
-  const bottom = stage.clientHeight - 12;
+  const returnBottom = Math.max(at("node-edge", "bottom").y, at("site-south", "bottom").y);
 
   /** @type {Record<string, Lane>} */
   const next = {};
@@ -166,18 +166,26 @@ function layout() {
   next.train = curve(glyph("stage-review"), glyph("stage-train"), 0);
   next.gate = curve(glyph("stage-train"), glyph("stage-gate"), 0);
   next.reject = curve(glyph("stage-gate"), { x: glyph("stage-gate").x - 34, y: glyph("stage-gate").y + 40 }, 8);
-  next.release = curve(at("stage-gate", "right"), at("improvement", "left"), 0);
+  const gateOut = at("node-edge", "right");
+  const releaseIn = at("improvement", "left");
+  const releaseGutter = (gateOut.x + releaseIn.x) / 2;
 
-  const ladderBottom = at("ladder", "bottom");
+  next.release = stacked
+    ? curve(at("node-edge", "bottom"), at("improvement", "top"), 0)
+    : { kind: "poly", points: [{ x: gateOut.x, y: at("stage-gate", "right").y }, { x: releaseGutter, y: at("stage-gate", "right").y }, { x: releaseGutter, y: releaseIn.y }, releaseIn] };
 
   for (const site of SITES) {
-    const siteBottom = at(`site-${site}`, "bottom");
     const siteLeft = at(`site-${site}`, "left");
-    const dx = site === "north" ? -40 : 40;
+    const outer = site === "north";
+    const ladderOut = at("ladder", "right");
+    const start = { x: ladderOut.x, y: ladderOut.y + (outer ? -8 : 8) };
+    const right = ladderOut.x + (outer ? 24 : 12);
+    const left = siteLeft.x - (outer ? 24 : 12);
+    const bottom = returnBottom + (outer ? 40 : 24);
 
     next[`ret-${site}`] = stacked
-      ? { kind: "poly", points: [ladderBottom, { x: ladderBottom.x, y: ladderBottom.y + 16 }, { x: 10, y: ladderBottom.y + 16 }, { x: 10, y: siteLeft.y }, siteLeft] }
-      : { kind: "poly", points: [ladderBottom, { x: ladderBottom.x, y: bottom }, { x: siteBottom.x + dx, y: bottom }, { x: siteBottom.x + dx, y: siteBottom.y }] };
+      ? { kind: "poly", points: [start, { x: right, y: start.y }, { x: right, y: at("ladder", "bottom").y + (outer ? 32 : 16) }, { x: left, y: at("ladder", "bottom").y + (outer ? 32 : 16) }, { x: left, y: siteLeft.y }, siteLeft] }
+      : { kind: "poly", points: [start, { x: right, y: start.y }, { x: right, y: bottom }, { x: left, y: bottom }, { x: left, y: siteLeft.y }, siteLeft] };
   }
 
   next.ctlDown = curve(at("node-orch", "bottom"), at("node-edge", "top"), 0);
