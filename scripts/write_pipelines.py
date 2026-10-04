@@ -111,7 +111,7 @@ text = header('rollout', 'site') + '''  input:
     # Poll timer only; adapter data comes from the local training service.
     generate:
       interval: 5s
-      mapping: 'root.site = env("TRAIN_LOOP_SITE")'
+      mapping: 'root = {"trigger": "rollout_poll", "site": env("TRAIN_LOOP_SITE")}'
   pipeline:
     processors:
       - label: fetch_site_bundle

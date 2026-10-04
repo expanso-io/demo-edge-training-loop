@@ -91,3 +91,9 @@ preflight warning is detailed in [RECORDING_PREFLIGHT.md](RECORDING_PREFLIGHT.md
 - `dashboard/`: local presenter, fresh read-only Cloud status and human review.
 
 Local operational state and secrets are gitignored. There is no remote repo.
+
+The shared `rollout` job selects both `role: site` nodes. Native Edge startup
+sets `TRAIN_LOOP_SITE` and `TRAIN_LOOP_INSTALL_PORT` for each node. Restart
+with `just down` and `just up` before deploying this version to pick up those
+settings. South waits for North's verified installation receipt before it
+receives the candidate.

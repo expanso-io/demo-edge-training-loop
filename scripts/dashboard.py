@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DASHBOARD = ROOT / 'dashboard'
 BACKEND = 'http://127.0.0.1:8025'
 CLOUD = {'checked': 0, 'mode': 'Cloud status awaiting verification', 'running': 0, 'total': 0}
-JOBS = 5
+JOBS = {f'train-loop-{path.stem}' for path in (ROOT / 'pipelines').glob('*.yaml')}
 
 
 def poll_cloud():
@@ -29,10 +29,10 @@ def poll_cloud():
             result = subprocess.run(['expanso-cli', 'job', 'list', '--format', 'json'],
                                     env=environment(), capture_output=True, text=True, timeout=12, check=True)
             jobs = [job for job in json.loads(result.stdout)
-                    if job['spec']['name'].startswith('train-loop-')]
+                    if job['spec']['name'] in JOBS]
             running = sum(job['status']['state']['state_type'].lower() == 'running' for job in jobs)
-            CLOUD.update(checked=time.time(), mode=f'Expanso Cloud: {running}/{JOBS} jobs Running',
-                         running=running, total=JOBS)
+            CLOUD.update(checked=time.time(), mode=f'Expanso Cloud: {running}/{len(JOBS)} jobs Running',
+                         running=running, total=len(JOBS))
         except (OSError, ValueError, subprocess.SubprocessError):
             CLOUD.update(checked=time.time(), mode='Cloud status unavailable; local receipts only',
                          running=0, total=0)
