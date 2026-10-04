@@ -141,8 +141,10 @@ def deploy():
 
 
 def stop():
+    deployed = {job['spec']['name'] for job in json.loads(cloud('job', 'list', '--format', 'json'))}
     for name in JOBS:
-        print(cloud('job', 'stop', name, '--force'))
+        if name in deployed:
+            print(cloud('job', 'stop', name, '--force'))
     for pidfile in RUNTIME.glob('*.pid'):
         if alive(pidfile):
             os.killpg(int(pidfile.read_text()), signal.SIGTERM)
