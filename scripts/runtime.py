@@ -90,9 +90,14 @@ def up():
     if subprocess.run(['docker', 'info'], capture_output=True).returncode:
         run(['docker', 'desktop', 'start'])
         (RUNTIME / 'docker-owned').touch()
+    # Containers left by a stopped Docker or a killed session are dead weight,
+    # not state: clear them. Only a running demo container means "use down".
+    running = run(['docker', 'ps', '--format', '{{.Names}}'], capture_output=True, text=True).stdout.splitlines()
+    if set(running) & set(CONTAINERS):
+        raise RuntimeError('Demo containers already running; use down first')
     existing = run(['docker', 'ps', '-a', '--format', '{{.Names}}'], capture_output=True, text=True).stdout.splitlines()
-    if set(existing) & set(CONTAINERS):
-        raise RuntimeError('Demo containers already exist; use down first')
+    for stale in sorted(set(existing) & set(CONTAINERS)):
+        run(['docker', 'rm', '-f', stale], capture_output=True)
     run(['docker', 'build', '-t', 'train-loop-local', '.'])
     for role, port, state in [('training', 8025, 'state'), ('north', 8026, 'north'), ('south', 8027, 'south')]:
         directory = RUNTIME / state
