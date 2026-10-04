@@ -14,10 +14,12 @@ config:
   pipeline:
     threads: 1
     processors:
-      - log:
+      - label: log_teacher_start
+        log:
           level: INFO
           message: 'Teacher starting id=${! this.id }'
-      - http:
+      - label: grade_transcript
+        http:
           url: http://127.0.0.1:8025/grade
           verb: POST
           headers:
@@ -25,10 +27,12 @@ config:
           timeout: 240s
           retries: 10
           retry_period: 5s
-      - log:
+      - label: log_teacher_result
+        log:
           level: INFO
           message: 'Teacher result id=${! this.id } error=${! error() }'
   output:
+    label: deliver_result
     reject_errored:
       http_client:
         url: http://127.0.0.1:8025/review

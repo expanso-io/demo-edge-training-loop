@@ -23,6 +23,7 @@ selector:
 
 def output(url):
     return f'''  output:
+    label: deliver_result
     reject_errored:
       http_client:
         url: {url}
@@ -43,7 +44,8 @@ for site, port in [('north', 18101), ('south', 18102)]:
       timeout: 300s
   pipeline:
     processors:
-      - log:
+      - label: log_transcript
+        log:
           level: INFO
           message: 'Transcript received id=${{! this.id }} site={site}'
 ''' + output('http://127.0.0.1:18110/transcript')
@@ -57,10 +59,12 @@ text = header('teacher', 'training') + '''  input:
   pipeline:
     threads: 1
     processors:
-      - log:
+      - label: log_teacher_start
+        log:
           level: INFO
           message: 'Teacher starting id=${! this.id }'
-      - http:
+      - label: grade_transcript
+        http:
           url: http://127.0.0.1:8025/grade
           verb: POST
           headers:
@@ -68,7 +72,8 @@ text = header('teacher', 'training') + '''  input:
           timeout: 240s
           retries: 10
           retry_period: 5s
-      - log:
+      - label: log_teacher_result
+        log:
           level: INFO
           message: 'Teacher result id=${! this.id } error=${! error() }'
 ''' + output('http://127.0.0.1:8025/review')
@@ -81,17 +86,20 @@ text = header('training-trigger', 'training') + '''  input:
       mapping: 'root = {"trigger": "schedule"}'
   pipeline:
     processors:
-      - http:
+      - label: trigger_training
+        http:
           url: http://127.0.0.1:8025/tick
           verb: POST
           headers:
             Content-Type: application/json
           retries: 10
           retry_period: 5s
-      - log:
+      - label: log_training_status
+        log:
           level: INFO
           message: 'Training status=${! this.status } error=${! error() }'
   output:
+    label: save_training_receipt
     reject_errored:
       file:
         path: /data/training-receipts.jsonl
@@ -113,7 +121,8 @@ for site, port in [('north', 8026), ('south', 8027)]:
         interval: 5s
   pipeline:
     processors:
-      - http:
+      - label: install_adapter
+        http:
           url: http://127.0.0.1:{port}/install
           verb: POST
           headers:
@@ -121,7 +130,8 @@ for site, port in [('north', 8026), ('south', 8027)]:
           timeout: 120s
           retries: 10
           retry_period: 5s
-      - log:
+      - label: log_release
+        log:
           level: INFO
           message: 'Release site={site} error=${{! error() }}'
 ''' + output('http://127.0.0.1:8025/receipt')

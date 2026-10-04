@@ -20,7 +20,8 @@ config:
         interval: 5s
   pipeline:
     processors:
-      - http:
+      - label: install_adapter
+        http:
           url: http://127.0.0.1:8027/install
           verb: POST
           headers:
@@ -28,10 +29,12 @@ config:
           timeout: 120s
           retries: 10
           retry_period: 5s
-      - log:
+      - label: log_release
+        log:
           level: INFO
           message: 'Release site=south error=${! error() }'
   output:
+    label: deliver_result
     reject_errored:
       http_client:
         url: http://127.0.0.1:8025/receipt

@@ -13,17 +13,20 @@ config:
       mapping: 'root = {"trigger": "schedule"}'
   pipeline:
     processors:
-      - http:
+      - label: trigger_training
+        http:
           url: http://127.0.0.1:8025/tick
           verb: POST
           headers:
             Content-Type: application/json
           retries: 10
           retry_period: 5s
-      - log:
+      - label: log_training_status
+        log:
           level: INFO
           message: 'Training status=${! this.status } error=${! error() }'
   output:
+    label: save_training_receipt
     reject_errored:
       file:
         path: /data/training-receipts.jsonl

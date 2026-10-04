@@ -14,10 +14,12 @@ config:
       timeout: 300s
   pipeline:
     processors:
-      - log:
+      - label: log_transcript
+        log:
           level: INFO
           message: 'Transcript received id=${! this.id } site=south'
   output:
+    label: deliver_result
     reject_errored:
       http_client:
         url: http://127.0.0.1:18110/transcript
