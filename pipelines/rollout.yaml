@@ -1,28 +1,28 @@
-name: train-loop-rollout-south
-description: Local conversation learning - rollout-south
+name: train-loop-rollout
+description: Local conversation learning - rollout
 type: pipeline
 selector:
   match_labels:
     demo: demo-edge-training-loop
     role: site
-    site: south
 config:
   input:
-    http_client:
-      url: http://127.0.0.1:8025/bundle/south
-      rate_limit: rollout_poll
-      retries: 10
-      retry_period: 5s
-  rate_limit_resources:
-    - label: rollout_poll
-      local:
-        count: 1
-        interval: 5s
+    # Poll timer only; adapter data comes from the local training service.
+    generate:
+      interval: 5s
+      mapping: 'root.site = env("TRAIN_LOOP_SITE")'
   pipeline:
     processors:
+      - label: fetch_site_bundle
+        http:
+          url: http://127.0.0.1:8025/bundle/${! this.site }
+          verb: GET
+          timeout: 120s
+          retries: 10
+          retry_period: 5s
       - label: install_adapter
         http:
-          url: http://127.0.0.1:8027/install
+          url: http://127.0.0.1:${! env("TRAIN_LOOP_INSTALL_PORT") }/install
           verb: POST
           headers:
             Content-Type: application/json
@@ -32,7 +32,7 @@ config:
       - label: log_release
         log:
           level: INFO
-          message: 'Release site=south error=${! error() }'
+          message: 'Release site=${! this.site } error=${! error() }'
   output:
     label: deliver_result
     reject_errored:

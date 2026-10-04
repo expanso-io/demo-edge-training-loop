@@ -77,8 +77,7 @@ endpoint `ektlu2wqvp82ym.us2.cloud.expanso.io`. In Jobs, visit the **Logs** and
 - `train-loop-collect-south`
 - `train-loop-teacher`
 - `train-loop-training-trigger`
-- `train-loop-rollout-north`
-- `train-loop-rollout-south`
+- `train-loop-rollout`
 
 Verify streaming log lines, moving real input/output traffic, and Running
 without Degraded jobs. Use a full batch to exercise both collection jobs. These

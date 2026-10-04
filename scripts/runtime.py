@@ -17,7 +17,7 @@ from cloud import ROOT, environment
 RUNTIME = ROOT / '.runtime'
 EDGE_IMAGE = 'ghcr.io/expanso-io/expanso-edge@sha256:bf767228d1a104a450550580118a6d4225352187fd75cc86a7d43760804c5ad1'
 CONTAINERS = ('train-loop-edge-training', 'train-loop-training', 'train-loop-north', 'train-loop-south')
-JOBS = tuple('train-loop-' + name for name in ('collect-north', 'collect-south', 'teacher', 'training-trigger', 'rollout-north', 'rollout-south'))
+JOBS = tuple('train-loop-' + name for name in ('collect-north', 'collect-south', 'teacher', 'training-trigger', 'rollout'))
 
 
 def run(args, **kwargs):
@@ -68,9 +68,12 @@ def start_edges():
         if not (directory / 'identity').exists():
             directory.mkdir(parents=True, mode=0o700, exist_ok=True)
             run(['expanso-edge', 'bootstrap', '--data-dir', str(directory)], env=environment(), capture_output=True)
+        site_env = environment()
+        site_env['TRAIN_LOOP_SITE'] = name
+        site_env['TRAIN_LOOP_INSTALL_PORT'] = '8026' if name == 'north' else '8027'
         spawn(f'edge-{name}', ['expanso-edge', 'run', '--config', str(ROOT / 'config' / f'{name}.yaml'),
                              '--data-dir', str(directory), '--name', f'train-loop-{name}',
-                             '--api-listen', f'127.0.0.1:{port}', '--no-watch'], environment())
+                             '--api-listen', f'127.0.0.1:{port}', '--no-watch'], site_env)
     directory = ROOT / '.expanso-edge' / 'training'
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     if not (directory / 'identity').exists():
@@ -130,8 +133,8 @@ def deploy():
     while time.monotonic() < deadline:
         jobs = json.loads(cloud('job', 'list', '--format', 'json'))
         states = {j['spec']['name']: j['status']['state']['state_type'] for j in jobs if j['spec']['name'] in JOBS}
-        if len(states) == 6 and all(state.lower() == 'running' for state in states.values()):
-            print('All six demo jobs Running in Expanso Cloud.')
+        if len(states) == len(JOBS) and all(state.lower() == 'running' for state in states.values()):
+            print(f'All {len(JOBS)} demo jobs Running in Expanso Cloud.')
             return
         time.sleep(3)
     raise RuntimeError(f'Jobs not ready: {states}')

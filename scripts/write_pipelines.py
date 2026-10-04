@@ -107,23 +107,23 @@ text = header('training-trigger', 'training') + '''  input:
 '''
 (ROOT / 'pipelines' / 'training-trigger.yaml').write_text(text)
 
-for site, port in [('north', 8026), ('south', 8027)]:
-    text = header(f'rollout-{site}', 'site', site) + f'''  input:
-    http_client:
-      url: http://127.0.0.1:8025/bundle/{site}
-      rate_limit: rollout_poll
-      retries: 10
-      retry_period: 5s
-  rate_limit_resources:
-    - label: rollout_poll
-      local:
-        count: 1
-        interval: 5s
+text = header('rollout', 'site') + '''  input:
+    # Poll timer only; adapter data comes from the local training service.
+    generate:
+      interval: 5s
+      mapping: 'root.site = env("TRAIN_LOOP_SITE")'
   pipeline:
     processors:
+      - label: fetch_site_bundle
+        http:
+          url: http://127.0.0.1:8025/bundle/${! this.site }
+          verb: GET
+          timeout: 120s
+          retries: 10
+          retry_period: 5s
       - label: install_adapter
         http:
-          url: http://127.0.0.1:{port}/install
+          url: http://127.0.0.1:${! env("TRAIN_LOOP_INSTALL_PORT") }/install
           verb: POST
           headers:
             Content-Type: application/json
@@ -133,6 +133,6 @@ for site, port in [('north', 8026), ('south', 8027)]:
       - label: log_release
         log:
           level: INFO
-          message: 'Release site={site} error=${{! error() }}'
+          message: 'Release site=${! this.site } error=${! error() }'
 ''' + output('http://127.0.0.1:8025/receipt')
-    (ROOT / 'pipelines' / f'rollout-{site}.yaml').write_text(text)
+(ROOT / 'pipelines' / 'rollout.yaml').write_text(text)

@@ -25,7 +25,7 @@ just deploy
 just record-check
 ```
 
-Confirm zero transcripts, both sites on base, no gate decision, and six jobs
+Confirm zero transcripts, both sites on base, no gate decision, and five jobs
 Running. Keep the terminal outside the capture area.
 
 ## Beat 1: the boundary

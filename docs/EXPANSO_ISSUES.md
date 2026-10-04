@@ -73,8 +73,7 @@ In **Jobs**, open each exact job below. Confirm **Running**, then inspect its
 - `train-loop-collect-south`
 - `train-loop-teacher`
 - `train-loop-training-trigger`
-- `train-loop-rollout-north`
-- `train-loop-rollout-south`
+- `train-loop-rollout`
 
 For both sites' collection charts, use the full `just produce` batch. Confirm
 log lines stream and actual input/output traffic moves; no job may be Degraded.

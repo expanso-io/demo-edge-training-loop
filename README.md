@@ -6,7 +6,7 @@ This demo collects text conversations at two sites, grades them with a local
 teacher, asks a person to review uncertain corrections, trains a LoRA adapter,
 and releases it only when it beats the current model on held-out requests.
 
-The presenter lives at **http://localhost:8024**. Expanso Cloud manages six
+The presenter lives at **http://localhost:8024**. Expanso Cloud manages five
 pipelines; all conversation bodies, model inference and training stay on this
 Mac. Cloud receives job metadata, operational logs and metrics. The logs contain
 record identifiers and processing status, not conversation bodies.
@@ -31,7 +31,7 @@ just record-check
 
 `up` starts Docker if needed, builds the local image, starts the two site
 services, training service, three Edge agents and presenter. `deploy` explicitly
-deploys the six selector-bound Cloud jobs and waits for Running. The presenter
+deploys the five selector-bound Cloud jobs and waits for Running. The presenter
 can approve corrections but cannot start, stop or deploy Cloud jobs.
 
 To make new conversations, run `just produce`. Read each correction on the
@@ -45,7 +45,7 @@ just down
 ```
 
 Rollback in this first-release demo returns both sites to the original base
-model. Watch site receipts before re-releasing. `down` stops only the six named
+model. Watch site receipts before re-releasing. `down` stops only the five named
 Cloud jobs and project-owned processes/containers. It stops Docker only if this
 project started it and no other containers are running. Ollama's pre-existing
 server is retained; `ollama stop mistral-small:24b` unloads the teacher when done.

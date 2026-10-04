@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DASHBOARD = ROOT / 'dashboard'
 BACKEND = 'http://127.0.0.1:8025'
 CLOUD = {'checked': 0, 'mode': 'Cloud status awaiting verification', 'running': 0, 'total': 0}
-JOBS = 6
+JOBS = 5
 
 
 def poll_cloud():
