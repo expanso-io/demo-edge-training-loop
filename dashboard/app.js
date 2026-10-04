@@ -841,7 +841,7 @@ function renderTraining(full) {
   if (training.status === "training") {
     text("train-step", `${training.step}/${training.steps}`);
     text("train-label", "STEPS");
-    text("train-meta", `LoRA on ${approved} approved conversations · this Mac`);
+  text("train-meta", `LoRA on ${approved} approved conversations`);
     bar.style.width = `${(training.step / steps) * 100}%`;
     text("train-pct", `${Math.round((training.step / steps) * 100)}%`);
   } else if (training.status === "idle") {
@@ -853,7 +853,7 @@ function renderTraining(full) {
   } else {
     text("train-step", training.status.toUpperCase());
     text("train-label", "RUN");
-    text("train-meta", training.version ? `${training.version} · this Mac` : "this Mac");
+  text("train-meta", training.version || "Customer edge node");
     bar.style.width = ["passed", "rejected", "evaluating"].includes(training.status) ? "100%" : "0%";
     text("train-pct", training.status);
   }
@@ -907,8 +907,8 @@ function render(full) {
   const why = element("edge-why");
 
   edge.dataset.running = String(live());
-  why.hidden = live();
-  why.textContent = cloud.total && cloud.running === 0 ? "NO JOBS RUNNING — scheduled from Expanso Cloud; customers keep writing in, nothing is graded" : "";
+  why.hidden = true;
+  why.textContent = "";
 
   text("before-title", shipped ? "BEFORE · BASE" : "CURRENT");
   text("after-title", shipped ? `AFTER · ${full.sites.north}` : "CANDIDATE");
@@ -943,7 +943,7 @@ async function poll() {
     element("review-loading").hidden = true;
     element("review-empty").hidden = false;
     element("edge-why").hidden = false;
-    element("edge-why").textContent = "TRAINING NODE UNREACHABLE — customers keep writing in at both sites";
+  element("edge-why").textContent = "Training node unreachable";
     element("node-edge").dataset.running = "false";
   } finally {
     setTimeout(poll, POLL_MS);

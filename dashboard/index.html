@@ -28,11 +28,11 @@
 
 <main>
   <!-- The stage. DOM owns the cards so text stays crisp; the flow canvas
-       overlays the whole stage and owns only the particles, anchored to
+       sits behind the cards and owns only the particles, anchored to
        lines, stage rows and card walls. -->
   <section class="stage" id="stage">
     <canvas id="flow" aria-hidden="true"></canvas>
-    <div class="boundary" id="boundary" aria-hidden="true"><span>CUSTOMER ENVIRONMENT &middot; CONVERSATIONS AND MODELS STAY HERE</span></div>
+    <div class="boundary" id="boundary" aria-hidden="true"></div>
 
     <div class="sites-col">
       <div class="col-head"><span class="kicker">ASSISTANT SITES</span><span class="col-sub">customers write in</span></div>
@@ -85,7 +85,7 @@
       <div class="card edge" id="node-edge">
         <div class="edge-head">
           <img class="logo" src="expanso-logo.png" alt="Expanso">
-          <div><span class="kicker">EDGE NODE &middot; TRAINING</span><h2>training node &middot; this Mac</h2></div>
+          <div><span class="kicker">CUSTOMER EDGE NODE</span><h2>Training node</h2></div>
         </div>
         <span class="pipes"><i data-pipe="collect-north">collect-north</i><i data-pipe="collect-south">collect-south</i><i data-pipe="teacher">teacher</i><i data-pipe="training-trigger">training-trigger</i><i data-pipe="rollout-north">rollout-north</i><i data-pipe="rollout-south">rollout-south</i></span>
         <p class="why" id="edge-why" hidden></p>
