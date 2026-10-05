@@ -256,14 +256,18 @@ body[data-shipped="true"] .answers { border-color: rgba(15, 122, 99, .55); }
 
 /* ------------------------------------------------------------------ panels */
 .panels { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, .8fr); gap: 14px; padding: 4px 3vw 40px; }
-.panel { background: var(--surface-2); border: 1px solid var(--line); border-radius: 2px; padding: 12px 14px; min-width: 0; height: 314px; overflow: auto; scrollbar-gutter: stable; }
+.panel { background: var(--surface-2); border: 1px solid var(--line); border-radius: 2px; padding: 12px 14px; min-width: 0; height: 314px; overflow: hidden; }
 .transcripts, .receipts { display: flex; flex-direction: column; overflow: hidden; }
 .panel-head { align-items: baseline; display: flex; flex: none; gap: 12px; margin-bottom: 8px; }
 .panel-head h3 { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
 .panel-head .hint { color: var(--text-dim); font-size: 13px; margin-left: auto; }
 .empty { color: var(--text-mute); font-size: 13px; }
 
-.feed, .events { list-style: none; padding: 0; flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+.feed, .events { list-style: none; padding: 0; flex: 1; min-height: 0; overflow: auto; }
+.feed, .events, #review-form, .review dl, textarea, .popup-body { scrollbar-width: none; }
+.feed::-webkit-scrollbar, .events::-webkit-scrollbar,
+#review-form::-webkit-scrollbar, .review dl::-webkit-scrollbar, textarea::-webkit-scrollbar,
+.popup-body::-webkit-scrollbar { display: none; }
 .feed li {
   border-bottom: 1px solid var(--line); color: var(--text); font-size: 13px;
   padding: 6px 4px; display: flex; gap: 10px; white-space: nowrap; overflow: hidden; font-variant-numeric: tabular-nums; cursor: pointer;
@@ -294,7 +298,11 @@ body[data-shipped="true"] .answers { border-color: rgba(15, 122, 99, .55); }
 .review-meta code { font-size: 13px; color: var(--text-dim); }
 .pill { border-radius: 9999px; font-size: 13px; letter-spacing: .08em; padding: 1px 8px; border: 1px solid currentColor; }
 .pill[data-state="warn"] { color: var(--warn); }
-.review dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+.review { display: flex; flex-direction: column; }
+#review-form { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
+.review dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; flex: 1; min-height: 0; overflow: auto; }
+.review-meta, .review label, .review textarea, .review-actions { flex: none; }
+.review textarea { height: 56px; resize: none; }
 .review dt { color: var(--text-mute); font-size: 13px; }
 .quote { font-size: 15px; color: var(--text); overflow-wrap: anywhere; font-family: var(--serif); }
 .rationale { font-size: 13px; color: var(--text-dim); }

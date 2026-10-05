@@ -30,11 +30,14 @@ just record-check
 ```
 
 `up` starts Docker if needed, builds the local image, starts the two site
-services, training service, three Edge agents and presenter. `deploy` explicitly
+services, training service, three Edge agents and presenter, plus a continuous conversation simulator. `deploy` explicitly
 deploys the five selector-bound Cloud jobs and waits for Running. The presenter
 can approve corrections but cannot start, stop or deploy Cloud jobs.
 
-To make new conversations, run `just produce`. Read each correction on the
+The background simulator alternates sites and submits real model answers
+through the collection inputs continuously. It uses only the authored training
+requests, with unique record IDs; held-out requests stay excluded. It stops
+with `just down`. Generation runs off camera. Read each correction on the
 board and approve or fix it. See [RECORDING_SCRIPT.md](RECORDING_SCRIPT.md) for
 the rejected first batch and the complete take.
 

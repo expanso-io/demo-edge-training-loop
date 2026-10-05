@@ -42,12 +42,8 @@ The exercise is text-only; no telephony or audio is captured.
 
 ## Beat 2: collect, grade, review
 
-```sh
-just produce 1
-```
-
-The external producer asks the actual North model a refund question and sends
-its answer through Expanso. Watch the burst on the north lane, then the transcript and teacher counts
+The background simulator asks the actual site models customer questions and
+sends their answers through Expanso continuously. Keep generation off camera. Watch the burst on the north lane, then the transcript and teacher counts
 change and the flow reach the REVIEW stage. Click the new row under
 *Conversations received* to open the whole transcript, then click again to
 close it.
@@ -63,20 +59,14 @@ Within the next scheduled trigger, point at the rejected minimum-data round:
 
 ## Beat 3: the approved batch
 
-```sh
-just produce
-```
-
-The already-graded first record is idempotent; the remaining requests run at
-the two sites. The board queues corrections below 0.98 confidence, and targets
+New requests continue arriving at both sites with unique record IDs. The board queues corrections below 0.98 confidence, and targets
 that fail the narrow policy check also require review. Review them carefully.
 For refunds, request the order number before checking eligibility. For booking
 changes, request the booking reference before checking availability. Never
 approve a sentence claiming the action already happened.
 
 The scheduled trigger starts once at least 12 approved records are available.
-For a full 16-record training set, wait until all records arrive, then approve
-the remaining queue promptly. The actual set and result are recorded; a pass is
+Approve the waiting corrections as conversations arrive. The actual set and result are recorded; a pass is
 never forced. If a candidate fails, show that rejection and retain the current
 site model. Reset and review the corrections before attempting another take.
 

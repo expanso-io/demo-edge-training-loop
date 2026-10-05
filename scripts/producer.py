@@ -5,6 +5,7 @@
 """External conversation producer: inference, then a real Expanso input."""
 import argparse
 import json
+import math
 import time
 import urllib.request
 import urllib.error
@@ -30,17 +31,34 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--count', type=int, default=len(TRAIN))
     parser.add_argument('--run', default='recording')
+    parser.add_argument('--continuous', action='store_true')
+    parser.add_argument('--interval', type=float, default=5)
     args = parser.parse_args()
+    if not math.isfinite(args.interval) or args.interval < 1:
+        parser.error('interval must be finite and at least one second')
     if not 1 <= args.count <= len(TRAIN):
         parser.error(f'count must be 1 to {len(TRAIN)}')
-    for index, (kind, prompt) in enumerate(TRAIN[:args.count]):
+    run_id = f'sim-{time.time_ns()}' if args.continuous else args.run
+    index = 0
+    while args.continuous or index < args.count:
+        kind, prompt = TRAIN[index % len(TRAIN)]
         site = 'north' if index % 2 == 0 else 'south'
         model_port = 8026 if site == 'north' else 8027
         pipeline_port = 18101 if site == 'north' else 18102
-        record = post(f'http://127.0.0.1:{model_port}/infer', {
-            'id': f'{args.run}-{index + 1:02}', 'kind': kind, 'prompt': prompt})
-        post(f'http://127.0.0.1:{pipeline_port}/transcript', record)
-        print(f"received {record['id']} from {site}", flush=True)
+        record_id = f'{run_id}-{index + 1:06}' if args.continuous else f'{run_id}-{index + 1:02}'
+        try:
+            record = post(f'http://127.0.0.1:{model_port}/infer', {
+                'id': record_id, 'kind': kind, 'prompt': prompt})
+            post(f'http://127.0.0.1:{pipeline_port}/transcript', record)
+            print(f"received {record['id']} from {site}", flush=True)
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as error:
+            if not args.continuous:
+                raise
+            print(f'Simulator delivery failed: {error}; retrying next interval', flush=True)
+        index += 1
+        if args.continuous:
+            time.sleep(args.interval)
+
 
 
 if __name__ == '__main__':

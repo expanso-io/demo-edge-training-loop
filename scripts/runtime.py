@@ -115,7 +115,8 @@ def up():
     start_edges()
     spawn('dashboard', ['uv', 'run', '-s', str(ROOT / 'scripts/dashboard.py'), '--port', '8024'])
     wait_http(8024)
-    print('Local services ready at http://localhost:8024; deploy jobs separately.')
+    spawn('simulator', ['uv', 'run', '-s', str(ROOT / 'scripts/producer.py'), '--continuous'])
+    print('Local services and conversation simulator ready at http://localhost:8024; deploy jobs separately.')
 
 
 def deploy():
