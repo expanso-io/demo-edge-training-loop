@@ -902,7 +902,9 @@ function renderBadge(full) {
 
   if (!full.cloud?.running) {
     setState("state-badge", "down");
-    badge.textContent = full.cloud?.total ? "PIPELINES STOPPED · SAVED STATE" : "CLOUD STATUS UNKNOWN · SAVED STATE";
+    badge.textContent = full.cloud?.total
+      ? `PIPELINES STOPPED · ${full.records.length ? "SAVED STATE" : "READY TO START"}`
+      : "CLOUD STATUS UNKNOWN";
 
     return;
   }

@@ -128,22 +128,28 @@ def up():
 
 
 def deploy():
+    deadline = time.monotonic() + 90
+    while True:
+        nodes = json.loads(cloud('node', 'list', '--label', 'demo=demo-edge-training-loop', '--format', 'json'))
+        online = [node['id'] for node in nodes if node['status']['connection_state'] != 'disconnected']
+        if not online:
+            break
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f'Deploy requires demo nodes offline; still online: {online}')
+        time.sleep(1)
     for path in sorted((ROOT / 'pipelines').glob('*.yaml')):
         result = subprocess.run(['expanso-cli', 'job', 'deploy', str(path)],
                                 env=environment(), capture_output=True, text=True, cwd=ROOT)
         if result.returncode and 'NO_CHANGES_DETECTED' not in result.stderr:
             raise RuntimeError(result.stderr)
         print(result.stdout or f'{path.name}: unchanged')
-    jobs = json.loads(cloud('job', 'list', '--format', 'json'))
-    for job in jobs:
-        if job['spec']['name'] in JOBS and job['status']['state']['state_type'].lower() == 'stopped':
-            print(cloud('job', 'rerun', job['spec']['name']))
+        print(cloud('job', 'stop', 'train-loop-' + path.stem, '--force'))
     deadline = time.monotonic() + 120
     while time.monotonic() < deadline:
         jobs = json.loads(cloud('job', 'list', '--format', 'json'))
         states = {j['spec']['name']: j['status']['state']['state_type'] for j in jobs if j['spec']['name'] in JOBS}
-        if len(states) == len(JOBS) and all(state.lower() == 'running' for state in states.values()):
-            print(f'All {len(JOBS)} demo jobs Running in Expanso Cloud.')
+        if len(states) == len(JOBS) and all(state.lower() == 'stopped' for state in states.values()):
+            print(f'All {len(JOBS)} demo jobs deployed and Stopped. Start them in Cloud for the demo.')
             return
         time.sleep(3)
     raise RuntimeError(f'Jobs not ready: {states}')

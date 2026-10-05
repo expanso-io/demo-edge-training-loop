@@ -32,8 +32,9 @@ just record-check
 services, training service, three Edge agents and presenter, plus a continuous
 conversation simulator. This demo enables the kit's single
 `startup.fresh_start` setting in `demo-kit.toml`: `up` stops the previous run,
-archives and resets its state, starts services, then deploys the five
-selector-bound Cloud jobs and waits for Running. The presenter
+archives and resets its state, deploys the five selector-bound Cloud jobs
+with Edge agents offline, and verifies they are Stopped before starting local
+services. Turn the pipelines on in Expanso Cloud during the demo. The presenter
 can approve corrections but cannot start, stop or deploy Cloud jobs.
 
 The background simulator alternates sites and submits real model answers

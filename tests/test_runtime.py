@@ -1,5 +1,6 @@
 """Shutdown confirmation before reset; no processes or Cloud calls started."""
 import signal
+import json
 import sys
 import tempfile
 import unittest
@@ -40,6 +41,41 @@ class ShutdownTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, 'not been reset'):
                     runtime.stop_processes()
             self.assertEqual(pidfile.read_text(), '1234')
+
+    def test_deployment_stops_every_job_and_never_reruns(self):
+        with tempfile.TemporaryDirectory(dir=SCRATCH) as directory:
+            root = Path(directory)
+            (root / 'pipelines').mkdir()
+            for name in runtime.JOBS:
+                (root / 'pipelines' / (name.removeprefix('train-loop-') + '.yaml')).write_text('fixture')
+            jobs = [{'spec': {'name': name}, 'status': {'state': {'state_type': 'Stopped'}}}
+                    for name in runtime.JOBS]
+            def cloud(*args):
+                if args[:2] == ('node', 'list'):
+                    return '[]'
+                if args[:2] == ('job', 'list'):
+                    return json.dumps(jobs)
+                self.assertEqual(args[:2], ('job', 'stop'))
+                return 'stopped'
+            with patch.object(runtime, 'ROOT', root), \
+                 patch.object(runtime, 'environment', return_value={}), \
+                 patch.object(runtime, 'cloud', side_effect=cloud) as calls, \
+                 patch.object(runtime.subprocess, 'run') as submit:
+                submit.return_value.returncode = 0
+                submit.return_value.stdout = 'deployed'
+                runtime.deploy()
+            self.assertEqual(submit.call_count, len(runtime.JOBS))
+            stopped = {call.args[2] for call in calls.call_args_list if call.args[:2] == ('job', 'stop')}
+            self.assertEqual(stopped, set(runtime.JOBS))
+
+    def test_deployment_refuses_online_demo_nodes(self):
+        nodes = [{'id': 'other-demo-node', 'status': {'connection_state': 'connected'}}]
+        with patch.object(runtime, 'cloud', return_value=json.dumps(nodes)), \
+             patch.object(runtime.time, 'monotonic', side_effect=[0, 100]), \
+             patch.object(runtime.subprocess, 'run') as submit:
+            with self.assertRaisesRegex(RuntimeError, 'requires demo nodes offline'):
+                runtime.deploy()
+        submit.assert_not_called()
 
 
 if __name__ == '__main__':

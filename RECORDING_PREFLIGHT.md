@@ -29,7 +29,9 @@ is never publicly hosted. Show the signed-in Cloud console separately if needed.
 ## Opening state
 
 Run `just up`. The kit's fresh-start setting stops the previous run, archives
-it under `.runtime/archive/`, resets, starts services and deploys Cloud jobs.
+it under `.runtime/archive/`, resets, deploys stopped Cloud jobs, then starts
+local services. Verify zero conversations and five stopped jobs. Start the
+pipelines in Expanso Cloud on camera.
 Confirm both sites start on base,
 with no gate verdict. The background simulator begins submitting conversations
 as soon as collection is running. The passing screenshots show

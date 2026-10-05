@@ -22,8 +22,9 @@ just up
 just record-check
 ```
 
-Confirm only new conversations, both sites on base, no gate decision, and five jobs
-Running. Keep the terminal outside the capture area.
+Confirm zero conversations, both sites on base, no gate decision, and five jobs
+Stopped. Keep the terminal outside the capture area. Start the pipelines in
+Expanso Cloud on camera; conversations then begin flowing.
 
 ## Beat 1: the boundary
 
