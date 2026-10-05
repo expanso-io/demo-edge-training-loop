@@ -341,7 +341,7 @@ function cloudRunning() {
 }
 
 function live() {
-  return connected && (S?.cloud?.total ? cloudRunning() > 0 : true);
+  return connected && cloudRunning() > 0;
 }
 
 /** @param {number} now */
@@ -359,12 +359,12 @@ function frame(now) {
   const batchWaiting = ["idle", "starting", "training"].includes(status);
   const latest = S?.rounds[S.rounds.length - 1];
 
-  // The sites never stop: customers write in whether or not anything trains.
+  // Ambient motion illustrates active sites; saved records do not imply activity.
   for (const site of SITES) {
     for (let seat = 0; seat < SEATS; seat++) {
-      emit(`cust-${site}-${seat}`, `cust-${site}-${seat}`, RATE.customer, COLOR.conv, dt,
+      emit(`cust-${site}-${seat}`, `cust-${site}-${seat}`, !S || moving ? RATE.customer : 0, COLOR.conv, dt,
         { speed: SPEED.customer, size: 2.2, trail: false, arrive: () => seatBusy(site, seat) });
-      emit(`seat-${site}-${seat}`, `seat-${site}-${seat}`, RATE.seat, COLOR.conv, dt,
+      emit(`seat-${site}-${seat}`, `seat-${site}-${seat}`, !S || moving ? RATE.seat : 0, COLOR.conv, dt,
         { speed: SPEED.seat, die: !moving, size: 3 + Math.random() * 1.2 });
     }
   }
@@ -899,6 +899,14 @@ function renderTraining(full) {
 /** @param {import("./contracts").State} full */
 function renderBadge(full) {
   const badge = element("state-badge");
+
+  if (!full.cloud?.running) {
+    setState("state-badge", "down");
+    badge.textContent = full.cloud?.total ? "PIPELINES STOPPED · SAVED STATE" : "CLOUD STATUS UNKNOWN · SAVED STATE";
+
+    return;
+  }
+
   const records = full.records;
   const pending = records.filter((record) => record.status === "pending").length;
   const grading = records.filter((record) => record.status === "grading").length;

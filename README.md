@@ -53,6 +53,10 @@ Cloud jobs and project-owned processes/containers. It stops Docker only if this
 project started it and no other containers are running. Ollama's pre-existing
 server is retained; `ollama stop mistral-small:24b` unloads the teacher when done.
 
+`down` followed by `up` resumes saved conversations, reviews and model versions;
+it does not clear them or restart Cloud jobs. Until `just deploy`, the board
+shows stopped pipelines and saved state, with site flow paused.
+
 For a fresh take, stop first, then preserve the prior run and reset:
 
 ```sh
