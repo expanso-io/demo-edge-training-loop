@@ -25,13 +25,15 @@ From this folder:
 npm ci
 just check
 just up
-just deploy
 just record-check
 ```
 
 `up` starts Docker if needed, builds the local image, starts the two site
-services, training service, three Edge agents and presenter, plus a continuous conversation simulator. `deploy` explicitly
-deploys the five selector-bound Cloud jobs and waits for Running. The presenter
+services, training service, three Edge agents and presenter, plus a continuous
+conversation simulator. This demo enables the kit's single
+`startup.fresh_start` setting in `demo-kit.toml`: `up` stops the previous run,
+archives and resets its state, starts services, then deploys the five
+selector-bound Cloud jobs and waits for Running. The presenter
 can approve corrections but cannot start, stop or deploy Cloud jobs.
 
 The background simulator alternates sites and submits real model answers
@@ -53,21 +55,15 @@ Cloud jobs and project-owned processes/containers. It stops Docker only if this
 project started it and no other containers are running. Ollama's pre-existing
 server is retained; `ollama stop mistral-small:24b` unloads the teacher when done.
 
-`down` followed by `up` resumes saved conversations, reviews and model versions;
-it does not clear them or restart Cloud jobs. Until `just deploy`, the board
-shows stopped pipelines and saved state, with site flow paused.
-
-For a fresh take, stop first, then preserve the prior run and reset:
+For a fresh take, use the same startup command:
 
 ```sh
-just down
-just reset
 just up
-just deploy
 ```
 
-`reset` archives state and adapters under `.runtime/archive/`; it preserves model
-weights, credentials and node identities. It refuses while demo services run.
+Each `up` archives state and adapters under `.runtime/archive/`; it preserves
+model weights, credentials and node identities. `reset` and `deploy` remain
+operator repair commands, but normal startup needs only `up`.
 
 ## What was proved
 
@@ -101,7 +97,7 @@ Local operational state and secrets are gitignored. There is no remote repo.
 
 The shared `rollout` job selects both `role: site` nodes. Native Edge startup
 sets `TRAIN_LOOP_SITE` and `TRAIN_LOOP_INSTALL_PORT` for each node. Restart
-with `just down` and `just up` before deploying this version to pick up those
+with `just up` to reset and deploy this version with those
 settings. South waits for North's verified installation receipt before it
 receives the candidate.
 

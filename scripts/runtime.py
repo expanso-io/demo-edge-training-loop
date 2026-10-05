@@ -8,11 +8,15 @@ import json
 import os
 import signal
 import subprocess
+import sys
 import time
 import urllib.request
 from pathlib import Path
 
 from cloud import ROOT, environment
+
+sys.path.insert(0, str(ROOT.parent / '_demo-kit'))
+from startup import run_startup
 
 RUNTIME = ROOT / '.runtime'
 EDGE_IMAGE = 'ghcr.io/expanso-io/expanso-edge@sha256:bf767228d1a104a450550580118a6d4225352187fd75cc86a7d43760804c5ad1'
@@ -86,7 +90,7 @@ def start_edges():
          '--data-dir', '/data', '--config', '/config/training.yaml', '--no-watch'])
 
 
-def up():
+def start_services():
     RUNTIME.mkdir(mode=0o700, exist_ok=True)
     if any(alive(path) for path in RUNTIME.glob('*.pid')):
         raise RuntimeError('Already running; use down before up')
@@ -116,7 +120,11 @@ def up():
     spawn('dashboard', ['uv', 'run', '-s', str(ROOT / 'scripts/dashboard.py'), '--port', '8024'])
     wait_http(8024)
     spawn('simulator', ['uv', 'run', '-s', str(ROOT / 'scripts/producer.py'), '--continuous'])
-    print('Local services and conversation simulator ready at http://localhost:8024; deploy jobs separately.')
+    print('Local services and conversation simulator ready at http://localhost:8024.')
+
+
+def up():
+    run_startup(ROOT, stop=stop, reset=reset, start=start_services, deploy=deploy)
 
 
 def deploy():

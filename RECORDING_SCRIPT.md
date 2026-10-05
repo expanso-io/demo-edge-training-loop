@@ -18,10 +18,7 @@ waiting time. Never replace measured progress with a sped-up counter.
 For a clean opening, run these commands from the permanent demo folder:
 
 ```sh
-just down
-just reset
 just up
-just deploy
 just record-check
 ```
 

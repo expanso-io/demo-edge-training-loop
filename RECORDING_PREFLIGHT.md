@@ -28,8 +28,9 @@ is never publicly hosted. Show the signed-in Cloud console separately if needed.
 
 ## Opening state
 
-Run `just down`, `just reset`, `just up`, then `just deploy`. Reset preserves the
-previous run under `.runtime/archive/`. Confirm both sites start on base,
+Run `just up`. The kit's fresh-start setting stops the previous run, archives
+it under `.runtime/archive/`, resets, starts services and deploys Cloud jobs.
+Confirm both sites start on base,
 with no gate verdict. The background simulator begins submitting conversations
 as soon as collection is running. The passing screenshots show
 a completed measured run, not the opening state. Never open a take on them.

@@ -33,6 +33,7 @@ workspace-check:
     @uv run -s ../_demo-kit/expanso-demo-init.py . --check
 
 test:
+    uv run -s ../_demo-kit/test-startup.py
     npm run lint
     npm run typecheck
     uv run --no-project -s tests/test_gate.py
