@@ -347,7 +347,7 @@ function frame(now) {
   const moving = live();
   const records = S?.records ?? [];
   const approved = records.filter((record) => record.status === "approved").length;
-  const graded = records.filter((record) => record.teacher).length;
+  const graded = records.filter((record) => record.teacher && record.teacher.source !== "selection").length;
   const status = S?.training.status ?? "idle";
   const training = status === "training";
   const batchWaiting = ["idle", "starting", "training"].includes(status);
@@ -538,6 +538,11 @@ function review(records) {
   const current = pending.find((record) => record.id === selectedId) || pending[0];
   const target = element("target");
   const batchCount = pending.filter((record) => Boolean(record.target)).length;
+  const duplicates = records.filter((record) => record.status === "duplicate").length;
+  const excluded = records.filter((record) => record.status === "excluded").length;
+  const discarded = records.filter((record) => record.status === "discarded").length;
+
+  text("selection-summary", `${duplicates} repeats skipped · ${excluded} already correct · ${discarded} discarded`);
 
   element("review-batch").hidden = batchCount === 0;
   text("review-batch", `Inspect ${batchCount} remaining corrections`);
@@ -559,7 +564,7 @@ function review(records) {
   }
 
   text("review-id", `${current.site} · ${current.id}`);
-  text("confidence", `${Math.round(current.teacher.confidence * 100)}% CONFIDENCE`);
+  text("confidence", current.teacher.source === "selection" ? "OUT OF SCOPE" : `${Math.round(current.teacher.confidence * 100)}% CONFIDENCE`);
   text("prompt", current.prompt);
   text("answer", current.answer);
   text("rationale", current.teacher.rationale);
@@ -806,7 +811,7 @@ function renderSite(site, full) {
 /** @param {import("./contracts").State} full */
 function renderTeacher(full) {
   const records = full.records;
-  const graded = records.filter((record) => record.teacher).length;
+  const graded = records.filter((record) => record.teacher && record.teacher.source !== "selection").length;
   const approved = records.filter((record) => record.status === "approved").length;
   const pending = records.filter((record) => record.status === "pending").length;
   const grading = records.filter((record) => record.status === "grading").length;

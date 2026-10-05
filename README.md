@@ -100,3 +100,9 @@ sets `TRAIN_LOOP_SITE` and `TRAIN_LOOP_INSTALL_PORT` for each node. Restart
 with `just down` and `just up` before deploying this version to pick up those
 settings. South waits for North's verified installation receipt before it
 receives the candidate.
+
+Review one useful correction and discard the out-of-scope weather request.
+Then open **Inspect remaining corrections**, inspect or edit the proposed
+targets, and sign off on that batch once. Repeated requests and already-correct
+answers stay out of training. The simulator reuses a bounded authored corpus;
+this selection demonstrates the policy exercise, not production data curation.

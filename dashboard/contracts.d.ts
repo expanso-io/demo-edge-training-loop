@@ -1,4 +1,5 @@
 export interface Teacher {
+  source?: string;
   confidence: number;
   rationale: string;
   verdict?: string;
