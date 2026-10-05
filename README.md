@@ -106,3 +106,8 @@ Then open **Inspect remaining corrections**, inspect or edit the proposed
 targets, and sign off on that batch once. Repeated requests and already-correct
 answers stay out of training. The simulator reuses a bounded authored corpus;
 this selection demonstrates the policy exercise, not production data curation.
+
+The selected-correction exercise uses a representative minimum of eight
+approved corrections. This is a demo batching setting, not a validated
+production sample-size recommendation. The original measured run in
+`docs/RESEARCH.md` remains unchanged.

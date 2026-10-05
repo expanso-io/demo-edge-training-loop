@@ -107,7 +107,7 @@
 
           <div class="row" id="stage-train" data-live="false">
             <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#layers"/></svg></span>
-            <div class="what"><span class="kicker">LoRA TRAIN</span><h3>fine-tunes the 135M student</h3><p class="meta" id="train-meta">needs 12 approved conversations to start</p></div>
+            <div class="what"><span class="kicker">LoRA TRAIN</span><h3>fine-tunes the 135M student</h3><p class="meta" id="train-meta">needs 8 approved corrections to start</p></div>
             <div class="num"><b id="train-step">&ndash;</b><small id="train-label">STEPS</small></div>
             <div class="bars progress" aria-label="Training progress"><i><b id="train-bar"></b></i><span id="train-pct">idle</span></div>
           </div>
@@ -131,7 +131,7 @@
       <div class="card improvement" id="improvement">
         <canvas id="ring" width="120" height="120" aria-label="Held-out checks passed by the candidate against the current model"></canvas>
         <div class="delta"><span id="delta">&mdash;</span><small>CHECKS GAINED</small></div>
-        <div class="verdict"><span id="verdict">no round yet</span><small id="verdict-sub">first gate runs after 12 approvals</small></div>
+        <div class="verdict"><span id="verdict">no round yet</span><small id="verdict-sub">first gate runs after batch sign-off</small></div>
       </div>
 
       <div class="card ladder" id="ladder">

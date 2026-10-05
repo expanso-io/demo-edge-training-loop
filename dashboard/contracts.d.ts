@@ -62,6 +62,7 @@ export interface Cloud {
 }
 
 export interface State {
+  selection?: { minimum: number; expected: number };
   records: Transcript[];
   events: ReceiptEvent[];
   mode: string;

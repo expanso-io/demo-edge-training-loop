@@ -12,7 +12,7 @@ import urllib.request
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from corpus import HELD_OUT, POLICY, passes
+from corpus import HELD_OUT, MIN_TRAINING, POLICY, TRAIN, passes
 from gate import training_fingerprint
 from learning import answer, train
 from store import STATE, connect, event, get, init, merge, put, records, snapshot
@@ -42,6 +42,18 @@ def infer(data):
             'site': ROLE, 'kind': data['kind'], 'id': data['id']}
 
 
+def authored(row):
+    return (row['kind'], row['prompt']) in TRAIN
+
+
+def earlier_selection(db, row):
+    return db.execute(
+        "SELECT id FROM records WHERE prompt=? AND rowid < "
+        "(SELECT rowid FROM records WHERE id=?) "
+        "LIMIT 1",
+        (row['prompt'], row['id'])).fetchone()
+
+
 def grade(data):
     global TEACHER_STARTED
     if data['kind'] not in ('refund', 'booking') or data['site'] not in ('north', 'south'):
@@ -57,6 +69,25 @@ def grade(data):
                        '(id,site,prompt,answer,kind,version,status) VALUES (?,?,?,?,?,?,?)',
                        (data['id'], data['site'], data['prompt'], data['answer'],
                         data['kind'], data['version'], 'grading'))
+        reason = None
+        with connect() as db:
+            repeated = earlier_selection(db, data)
+        if repeated:
+            reason = 'Repeated request; an earlier example already represents it'
+        elif not authored(data):
+            reason = 'Outside the authored refund and booking training set; discard this example'
+        elif passes(data['kind'], data['answer']):
+            reason = 'Original answer already meets the policy; no correction needed'
+        if reason:
+            teacher = {'verdict': 'pass' if passes(data['kind'], data['answer']) else 'fail',
+                       'corrected_target': '', 'confidence': 0, 'rationale': reason,
+                       'source': 'selection'}
+            with connect() as db:
+                db.execute('UPDATE records SET teacher=?,target=?,status=? WHERE id=?',
+                           (json.dumps(teacher), '', 'graded', data['id']))
+            event('collect', f"Transcript received from {data['site']}")
+            event('selection', f"Filtered {data['id']}: {reason}")
+            return {'id': data['id'], 'teacher': teacher}
         if time.monotonic() - TEACHER_STARTED < 5:
             raise RuntimeError('Teacher rate cap; retry after five seconds')
         TEACHER_STARTED = time.monotonic()
@@ -94,32 +125,77 @@ def grade(data):
 
 def review(data):
     with connect() as db:
+        db.execute('BEGIN IMMEDIATE')
         row = db.execute('SELECT * FROM records WHERE id=?', (data['id'],)).fetchone()
         if not row or not row['teacher']:
             raise ValueError('Teacher result missing')
         if row['status'] != 'graded':
             return {'id': data['id'], 'status': row['status']}
         teacher = json.loads(row['teacher'])
-        status = 'approved' if teacher['confidence'] >= 0.98 and passes(row['kind'], row['target']) else 'pending'
+        if earlier_selection(db, row):
+            status = 'duplicate'
+        elif authored(row) and passes(row['kind'], row['answer']):
+            status = 'excluded'
+        elif not authored(row):
+            status = 'pending'
+        else:
+            status = 'approved' if teacher['confidence'] >= 0.98 and passes(row['kind'], row['target']) else 'pending'
         db.execute('UPDATE records SET status=? WHERE id=?', (status, data['id']))
-    event('review', f"{data['id']}: {'ready for training' if status == 'approved' else 'needs a person'}")
+    descriptions = {'approved': 'ready for training', 'pending': 'needs a person',
+                    'duplicate': 'excluded repeated request', 'excluded': 'original answer already correct'}
+    event('review', f"{data['id']}: {descriptions[status]}")
     return {'id': data['id'], 'status': status}
 
 
-def approve(data):
-    target = str(data['target']).strip()
-    if not 1 <= len(target) <= 2000:
+def validate_approval(db, item):
+    target = item['target']
+    if not isinstance(target, str) or not 1 <= len(target.strip()) <= 2000:
         raise ValueError('Enter a target of at most 2000 characters')
+    target = target.strip()
+    row = db.execute('SELECT * FROM records WHERE id=?', (item['id'],)).fetchone()
+    if not row or row['status'] != 'pending':
+        raise ValueError('Item is no longer pending')
+    if not authored(row):
+        raise ValueError('Request is outside the authored training set; discard it')
+    if earlier_selection(db, row):
+        raise ValueError('Repeated request cannot enter training')
+    if not passes(row['kind'], target):
+        raise ValueError('Target must request the required reference and avoid a completed-action claim')
+    return row, target
+
+
+def approve_batch(data):
+    items = data['items']
+    if not isinstance(items, list) or not 1 <= len(items) <= len(TRAIN):
+        raise ValueError('Choose between one and sixteen examples')
     with connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        validated = [validate_approval(db, item) for item in items]
+        if len({row['prompt'] for row, _ in validated}) != len(validated):
+            raise ValueError('Batch contains repeated requests')
+        for row, target in validated:
+            db.execute('UPDATE records SET status=?,target=?,reviewed_at=? WHERE id=?',
+                       ('approved', target, time.time(), row['id']))
+    for row, _ in validated:
+        event('review', f"Reviewer approved {row['id']}")
+    return {'status': 'approved', 'ids': [row['id'] for row, _ in validated]}
+
+
+def approve(data):
+    approve_batch({'items': [data]})
+    return {'id': data['id'], 'status': 'approved'}
+
+
+def discard(data):
+    with connect() as db:
+        db.execute('BEGIN IMMEDIATE')
         row = db.execute('SELECT * FROM records WHERE id=?', (data['id'],)).fetchone()
         if not row or row['status'] != 'pending':
             raise ValueError('Item is no longer pending')
-        if not passes(row['kind'], target):
-            raise ValueError('Target must request the required reference and avoid a completed-action claim')
-        db.execute('UPDATE records SET status=?,target=?,reviewed_at=? WHERE id=?',
-                   ('approved', target, time.time(), data['id']))
-    event('review', f"Reviewer approved {data['id']}")
-    return {'id': data['id'], 'status': 'approved'}
+        db.execute('UPDATE records SET status=?,reviewed_at=? WHERE id=?',
+                   ('discarded', time.time(), data['id']))
+    event('review', f"Reviewer discarded {data['id']}")
+    return {'id': data['id'], 'status': 'discarded'}
 
 
 def train_worker(rows, version, current):
@@ -151,7 +227,7 @@ def tick(data):
         TRAIN_LOCK.release()
         return {'status': 'waiting'}
     put('last_training_set', fingerprint)
-    if len(rows) < 12:
+    if len(rows) < MIN_TRAINING:
         rounds = get('rounds')
         if not any(r['reason'] == 'Too little approved data' for r in rounds):
             rounds.append({'version': 'data-gate', 'status': 'rejected',
@@ -161,7 +237,7 @@ def tick(data):
         TRAIN_LOCK.release()
         return {'status': 'rejected', 'reason': 'minimum approved data not met'}
     consumed = set(get('trained_ids') or [])
-    if sum(r['id'] not in consumed for r in rows) < 12:
+    if sum(r['id'] not in consumed for r in rows) < MIN_TRAINING:
         TRAIN_LOCK.release()
         return {'status': 'waiting for new approved batch'}
     sequence = max(get('version_sequence') or 0, len(get('rounds'))) + 1
@@ -303,7 +379,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('Invalid request size')
             data = json.loads(self.rfile.read(length))
             routes = {'/infer': infer, '/grade': grade, '/review': review,
-                      '/approve': approve, '/tick': tick, '/install': install, '/receipt': receipt,
+                      '/approve': approve, '/approve-batch': approve_batch, '/discard': discard,
+                      '/tick': tick, '/install': install, '/receipt': receipt,
                       '/rollback': rollback, '/release-again': release_again}
             if self.path not in routes:
                 self.respond(404, {'error': 'Unknown endpoint'})

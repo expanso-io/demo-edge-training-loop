@@ -5,6 +5,7 @@ import sqlite3
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from corpus import MIN_TRAINING, TRAIN
 
 STATE = Path(os.environ.get('TRAIN_STATE', '.runtime/state')).resolve()
 STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -84,5 +85,5 @@ def records():
 def snapshot():
     with connect() as db:
         events = [dict(r) for r in db.execute('SELECT * FROM events ORDER BY seq DESC LIMIT 12')]
-    return {'records': records(), 'events': events, 'mode': get('mode'),
+    return {'selection': {'minimum': MIN_TRAINING, 'expected': len(TRAIN)}, 'records': records(), 'events': events, 'mode': get('mode'),
             'sites': get('sites'), 'site_checks': get('site_checks'), 'rollback': get('rollback'), 'rounds': get('rounds'), 'training': get('training')}

@@ -40,35 +40,28 @@ lane crossing. The site lanes are already streaming terracotta: customers keep t
 is `mistral-small:24b`; the student is a pinned 135M-parameter instruct model.
 The exercise is text-only; no telephony or audio is captured.
 
-## Beat 2: collect, grade, review
+## Beat 2: select the useful mistake
 
-The background simulator asks the actual site models customer questions and
-sends their answers through Expanso continuously. Keep generation off camera. Watch the burst on the north lane, then the transcript and teacher counts
-change and the flow reach the REVIEW stage. Click the new row under
-*Conversations received* to open the whole transcript, then click again to
-close it.
-Read the teacher's confidence, rationale and correction. Fix the sentence if
-needed, then click **Approve for training**.
+The background simulator sends actual model answers through Expanso.
+Read the first refund request, original answer, teacher rationale, and proposed
+correction. Keep the correction after checking it asks for the order number.
+Discard the weather request: it is outside this refund and booking exercise.
+The selection counts show repeats and already-correct answers staying out.
 
-Say: “The larger local model checks the answer and proposes a correction.
-Uncertain cases pause for a person. A confidence score is a review signal,
-not proof that the teacher is right.”
+Say: “We learn from useful corrections, not every conversation. This mistake
+needs a better answer. That weather request does not belong in this batch.”
 
-Within the next scheduled trigger, point at the rejected minimum-data round:
-“One approved conversation is not enough. Nothing ships.”
+## Beat 3: inspect and sign off once
 
-## Beat 3: the approved batch
+Open **Inspect remaining corrections**. The panel lists each customer request,
+original answer, teacher rationale, and editable target. Inspect the refund
+and booking corrections, then approve the inspected batch once. This is an
+explicit batch review, not an automatic approval of incoming conversations.
+The simulator continues, but repeated requests do not add review work.
 
-New requests continue arriving at both sites with unique record IDs. The board queues corrections below 0.98 confidence, and targets
-that fail the narrow policy check also require review. Review them carefully.
-For refunds, request the order number before checking eligibility. For booking
-changes, request the booking reference before checking availability. Never
-approve a sentence claiming the action already happened.
-
-The scheduled trigger starts once at least 12 approved records are available.
-Approve the waiting corrections as conversations arrive. The actual set and result are recorded; a pass is
-never forced. If a candidate fails, show that rejection and retain the current
-site model. Reset and review the corrections before attempting another take.
+The scheduled trigger needs at least 8 approved corrections (a representative demo batch size). The real held-out
+gate still controls release. Never claim that a candidate passed before its
+results and both site receipts appear.
 
 ## Beat 4: training and the gate
 

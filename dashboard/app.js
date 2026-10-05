@@ -252,6 +252,12 @@ function resize() {
 
 addEventListener("resize", resize);
 
+// Live answers and status text can resize the stage without resizing the window.
+// Keep the bitmap matched to its CSS size so paths stay on their DOM anchors.
+const flowResizeObserver = new ResizeObserver(resize);
+
+flowResizeObserver.observe(stage);
+
 /* ------------------------------------------------------------ particles */
 
 /** @type {import("./contracts").Particle[]} */
@@ -535,17 +541,21 @@ let submitting = false;
 /** @param {import("./contracts").Transcript[]} records */
 function review(records) {
   const pending = records.filter((record) => record.status === "pending");
-  const current = pending.find((record) => record.id === selectedId) || pending[0];
+  const current = pending.find((record) => record.id === selectedId) || pending.find((record) => record.teacher.source === "selection") || pending[0];
   const target = element("target");
   const batchCount = pending.filter((record) => Boolean(record.target)).length;
   const duplicates = records.filter((record) => record.status === "duplicate").length;
   const excluded = records.filter((record) => record.status === "excluded").length;
   const discarded = records.filter((record) => record.status === "discarded").length;
+  const distinct = new Set(records.flatMap((record) => record.target || record.status === "excluded" ? [record.prompt] : [])).size;
+  const batchButton = element("review-batch");
+
+  if (batchButton instanceof HTMLButtonElement) batchButton.disabled = distinct < (S?.selection?.expected ?? 16);
 
   text("selection-summary", `${duplicates} repeats skipped · ${excluded} already correct · ${discarded} discarded`);
 
   element("review-batch").hidden = batchCount === 0;
-  text("review-batch", `Inspect ${batchCount} remaining corrections`);
+  text("review-batch", distinct < (S?.selection?.expected ?? 16) ? `Batch collecting · ${distinct}/${S?.selection?.expected ?? 16}` : `Inspect ${batchCount} corrections`);
 
   if (!(target instanceof HTMLTextAreaElement)) throw new Error("Review input missing");
 
@@ -573,6 +583,7 @@ function review(records) {
   if (approve instanceof HTMLButtonElement) approve.disabled = !current.target || submitting;
 
   target.hidden = !current.target;
+  element("target-label").hidden = !current.target;
 
   if (selectedId !== current.id) {
     target.value = current.target;
@@ -653,7 +664,7 @@ function rounds(history, trainingStatus) {
     text("gate-meta", latest ? latest.reason : "candidate must beat the current model");
     text("delta", "—");
     text("verdict", latest ? (latest.status === "passed" ? "released" : "held · sites unchanged") : "no round yet");
-    text("verdict-sub", latest ? latest.reason : "first gate runs after 12 approvals");
+    text("verdict-sub", latest ? latest.reason : "first gate runs after batch sign-off");
     cells("checks-base", []);
     cells("checks-cand", []);
 
@@ -847,7 +858,7 @@ function renderTeacher(full) {
   }
 
   label.id = "approved-label";
-  label.textContent = `${approved} approved for training · needs 12`;
+  label.textContent = `${approved} approved for training · needs ${full.selection?.minimum ?? 8}`;
   queue.replaceChildren(chips, label);
 }
 
@@ -869,11 +880,11 @@ function renderTraining(full) {
   } else if (training.status === "idle") {
     text("train-step", "–");
     text("train-label", "STEPS");
-    text("train-meta", approved >= 12 ? "batch ready · next scheduled trigger starts the run" : `needs 12 approved conversations · ${approved} so far`);
+    text("train-meta", approved >= (full.selection?.minimum ?? 8) ? "batch ready · next scheduled trigger starts the run" : `needs ${full.selection?.minimum ?? 8} approved corrections · ${approved} so far`);
     bar.style.width = "0%";
     text("train-pct", "idle");
   } else {
-    text("train-step", training.status.toUpperCase());
+  text("train-step", training.status === "evaluating" ? "EVAL" : training.status === "starting" ? "START" : training.status.toUpperCase());
     text("train-label", "RUN");
   text("train-meta", training.version || "Customer edge node");
     bar.style.width = ["passed", "rejected", "evaluating"].includes(training.status) ? "100%" : "0%";
@@ -1077,7 +1088,19 @@ function hidePopup() {
 function openRecord(id) {
   const record = S?.records.find((item) => item.id === id);
 
-  if (record) showPopup(`CONVERSATION · ${record.site.toUpperCase()} · ${record.id}`, conversationView(record));
+  if (record) {
+    if (record.status === "pending" && S) {
+      const target = element("target");
+
+      if (target instanceof HTMLTextAreaElement) target.value = record.target;
+
+      selectedId = record.id;
+      text("review-error", "");
+      review(S.records);
+    }
+
+    showPopup(`CONVERSATION · ${record.site.toUpperCase()} · ${record.id}`, conversationView(record));
+  }
 }
 
 /** @param {"north" | "south"} site @param {number} seat */

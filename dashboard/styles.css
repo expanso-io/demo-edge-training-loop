@@ -156,7 +156,7 @@ header output[data-state="down"] { color: var(--text-dim); }
 .kinds i { display: block; height: 4px; border-radius: 0; overflow: hidden; }
 .kinds i b { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent); transition: width .4s ease; font-size: 0; }
 .kinds i[data-kind="booking"] b { background: var(--ctl); }
-.last { grid-column: 1 / -1; color: var(--text-dim); font-size: 13px; cursor: pointer; }
+.last { grid-column: 1 / -1; color: var(--text-dim); font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .last b { color: var(--accent); font-weight: 500; font-size: 13px; display: inline; }
 .last:hover { color: var(--text); }
 
@@ -190,7 +190,7 @@ header output[data-state="down"] { color: var(--text-dim); }
 .row h3 { font-size: 14px; font-weight: 600; margin: 1px 0 1px; }
 .row .num { text-align: right; }
 .row .num b { display: block; font-size: 24px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
-#train-step { font-size: 16px; overflow-wrap: anywhere; }
+#train-step { font-size: 14px; overflow-wrap: anywhere; }
 .row .num small { color: var(--text-mute); font-size: 13px; letter-spacing: .08em; }
 .row .num.warn b { color: var(--warn); }
 #stage-review[data-queue="0"] .num.warn b { color: var(--text); }
@@ -296,10 +296,11 @@ body[data-shipped="true"] .answers { border-color: rgba(15, 122, 99, .55); }
 
 .skeleton { height: 180px; background: var(--surface); border-radius: 4px; }
 .review-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-.review-meta code { font-size: 13px; color: var(--text-dim); }
+.review-meta code { flex: 1; min-width: 0; font-size: 13px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pill { border-radius: 9999px; font-size: 13px; letter-spacing: .08em; padding: 1px 8px; border: 1px solid currentColor; }
 .pill[data-state="warn"] { color: var(--warn); }
 .review { display: flex; flex-direction: column; }
+.review label[hidden] { display: none; }
 #review-form { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
 .review dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; flex: 1; min-height: 0; overflow: auto; }
 .review-meta, .review label, .review textarea, .review-actions { flex: none; }
@@ -316,8 +317,8 @@ button { padding: 7px 14px; background: transparent; cursor: pointer; }
 button:disabled { cursor: wait; opacity: .5; }
 .review-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
 #review-error { color: var(--err); font-size: 13px; }
-#review-batch { flex: none; margin-top: 8px; text-align: left; }
-#selection-summary { flex: none; font-size: 12px; color: var(--text-mute); margin-top: 6px; }
+#review-batch { flex: none; text-align: left; font-size: 13px; }
+#selection-summary { flex: none; font-size: 13px; color: var(--text-mute); margin-top: 6px; }
 #batch-review { width: min(900px, calc(100vw - 32px)); height: min(760px, calc(100dvh - 32px)); padding: 20px; border: 1px solid var(--line); color: var(--text); background: var(--surface); }
 #batch-review[open] { display: flex; flex-direction: column; gap: 12px; }
 #batch-review::backdrop { background: rgba(30, 26, 22, .45); }

@@ -36,6 +36,8 @@ test:
     npm run lint
     npm run typecheck
     uv run --no-project -s tests/test_gate.py
+    uv run --no-project -s tests/test_selection.py
+    uv run --no-project -s tests/test_producer.py
     uv run --no-project python -m py_compile scripts/*.py
     uv run -s scripts/dashboard.py --check
 

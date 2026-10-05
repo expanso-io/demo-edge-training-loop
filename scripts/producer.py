@@ -40,25 +40,30 @@ def main():
         parser.error(f'count must be 1 to {len(TRAIN)}')
     run_id = f'sim-{time.time_ns()}' if args.continuous else args.run
     index = 0
+    record = None
     while args.continuous or index < args.count:
         sample_index = max(0, index - 1) if args.continuous else index
         kind, prompt = TRAIN[sample_index % len(TRAIN)]
         if args.continuous and index == 1:
-            kind, prompt = 'refund', 'What will the weather be tomorrow?' 
+            kind, prompt = 'refund', 'What will the weather be tomorrow?'
         site = 'north' if index % 2 == 0 else 'south'
         model_port = 8026 if site == 'north' else 8027
         pipeline_port = 18101 if site == 'north' else 18102
         record_id = f'{run_id}-{index + 1:06}' if args.continuous else f'{run_id}-{index + 1:02}'
         try:
-            record = post(f'http://127.0.0.1:{model_port}/infer', {
-                'id': record_id, 'kind': kind, 'prompt': prompt})
+            if record is None:
+                record = post(f'http://127.0.0.1:{model_port}/infer', {
+                    'id': record_id, 'kind': kind, 'prompt': prompt})
             post(f'http://127.0.0.1:{pipeline_port}/transcript', record)
             print(f"received {record['id']} from {site}", flush=True)
         except (urllib.error.URLError, TimeoutError, ConnectionError) as error:
             if not args.continuous:
                 raise
-            print(f'Simulator delivery failed: {error}; continuing next interval', flush=True)
+            print(f'Simulator delivery failed: {error}; retrying same conversation', flush=True)
+            time.sleep(args.interval)
+            continue
         index += 1
+        record = None
         if args.continuous:
             time.sleep(args.interval)
 

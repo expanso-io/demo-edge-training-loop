@@ -1,5 +1,7 @@
 """Authored requests; held-out wording is excluded from training."""
 
+MIN_TRAINING = 8  # Representative batch size for this fixed demo exercise.
+
 POLICY = (
     "You are a customer service agent. Reply in one short British English sentence. "
     "For refunds, ask for the order number before checking eligibility; never say a refund is done. "
