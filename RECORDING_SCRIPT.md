@@ -22,7 +22,7 @@ just up
 just record-check
 ```
 
-Confirm zero transcripts, both sites on base, no gate decision, and five jobs
+Confirm only new conversations, both sites on base, no gate decision, and five jobs
 Running. Keep the terminal outside the capture area.
 
 ## Beat 1: the boundary
