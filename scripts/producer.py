@@ -54,7 +54,7 @@ def main():
         except (urllib.error.URLError, TimeoutError, ConnectionError) as error:
             if not args.continuous:
                 raise
-            print(f'Simulator delivery failed: {error}; retrying next interval', flush=True)
+            print(f'Simulator delivery failed: {error}; continuing next interval', flush=True)
         index += 1
         if args.continuous:
             time.sleep(args.interval)
