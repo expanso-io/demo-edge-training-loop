@@ -149,15 +149,29 @@ def deploy():
     raise RuntimeError(f'Jobs not ready: {states}')
 
 
+def stop_processes():
+    pidfiles = list(RUNTIME.glob('*.pid'))
+    for pidfile in pidfiles:
+        if alive(pidfile):
+            try:
+                os.killpg(int(pidfile.read_text()), signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+    deadline = time.monotonic() + 15
+    while any(alive(path) for path in pidfiles):
+        if time.monotonic() >= deadline:
+            raise RuntimeError('Demo processes did not stop; state has not been reset')
+        time.sleep(0.1)
+    for pidfile in pidfiles:
+        pidfile.unlink(missing_ok=True)
+
+
 def stop():
     deployed = {job['spec']['name'] for job in json.loads(cloud('job', 'list', '--format', 'json'))}
     for name in JOBS:
         if name in deployed:
             print(cloud('job', 'stop', name, '--force'))
-    for pidfile in RUNTIME.glob('*.pid'):
-        if alive(pidfile):
-            os.killpg(int(pidfile.read_text()), signal.SIGTERM)
-        pidfile.unlink(missing_ok=True)
+    stop_processes()
     if subprocess.run(['docker', 'info'], capture_output=True).returncode == 0:
         for name in CONTAINERS:
             found = subprocess.run(['docker', 'inspect', name], capture_output=True, text=True)
