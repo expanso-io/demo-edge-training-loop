@@ -101,7 +101,7 @@
 
           <div class="row" id="stage-review" data-live="false">
             <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#headset"/></svg></span>
-            <div class="what"><span class="kicker">HUMAN CHECK</span><h3>pauses uncertain calls</h3><p class="meta">under 0.98 confidence, or a policy miss</p></div>
+            <div class="what"><span class="kicker">SELECT &amp; REVIEW</span><h3>keep useful corrections</h3><p class="meta">skip repeats and correct answers; discard unsuitable input</p></div>
             <div class="num warn"><b id="review-count">0</b><small>WAITING</small></div>
             <div class="bars queue" id="queue" aria-label="Approved for training"><span id="approved-label">0 approved for training</span></div>
           </div>
@@ -171,8 +171,9 @@
         </dl>
         <label for="target">correction &middot; edit if needed</label>
         <textarea id="target" rows="2" maxlength="2000" required></textarea>
-        <div class="review-actions"><button type="submit" id="approve">Approve for training</button><p id="review-error" role="alert"></p></div>
+        <div class="review-actions"><button type="submit" id="approve">Keep correction</button><button type="button" id="discard">Discard</button><p id="review-error" role="alert"></p></div>
       </form>
+      <button type="button" id="review-batch" hidden>Inspect remaining corrections</button>
     </div>
 
     <div class="panel receipts">
@@ -181,5 +182,12 @@
     </div>
   </section>
 </main>
+<dialog id="batch-review" aria-labelledby="batch-title">
+  <div class="batch-head"><h2 id="batch-title">Inspect the training batch</h2><button type="button" id="batch-close">Close</button></div>
+  <p>Keep only useful corrections. Repeats, correct answers, and unsuitable input stay out of this batch. Edit targets before signing off.</p>
+  <div id="batch-items" tabindex="0" aria-label="Batch corrections"></div>
+  <p id="batch-error" role="alert"></p>
+  <button type="button" id="batch-approve">Approve this inspected batch</button>
+</dialog>
 </body>
 </html>

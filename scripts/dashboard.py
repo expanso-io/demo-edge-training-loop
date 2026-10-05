@@ -76,7 +76,7 @@ class Handler(SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
-        if self.path != '/api/approve':
+        if self.path not in ('/api/approve', '/api/discard', '/api/approve-batch'):
             self.json(404, {'error': 'Unknown endpoint'})
             return
         origin = self.headers.get('Origin')
@@ -86,10 +86,10 @@ class Handler(SimpleHTTPRequestHandler):
             self.json(403, {'error': 'Approval must come from the local board'})
             return
         size = int(self.headers.get('Content-Length', '0'))
-        if not 0 < size < 10000:
+        if not 0 < size < 50000:
             self.json(400, {'error': 'Invalid approval size'})
             return
-        self.proxy('/approve', self.rfile.read(size))
+        self.proxy(self.path.removeprefix('/api'), self.rfile.read(size))
 
     def log_message(self, *args):
         pass

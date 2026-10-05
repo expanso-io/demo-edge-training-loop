@@ -41,7 +41,10 @@ def main():
     run_id = f'sim-{time.time_ns()}' if args.continuous else args.run
     index = 0
     while args.continuous or index < args.count:
-        kind, prompt = TRAIN[index % len(TRAIN)]
+        sample_index = max(0, index - 1) if args.continuous else index
+        kind, prompt = TRAIN[sample_index % len(TRAIN)]
+        if args.continuous and index == 1:
+            kind, prompt = 'refund', 'What will the weather be tomorrow?' 
         site = 'north' if index % 2 == 0 else 'south'
         model_port = 8026 if site == 'north' else 8027
         pipeline_port = 18101 if site == 'north' else 18102

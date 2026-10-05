@@ -537,6 +537,10 @@ function review(records) {
   const pending = records.filter((record) => record.status === "pending");
   const current = pending.find((record) => record.id === selectedId) || pending[0];
   const target = element("target");
+  const batchCount = pending.filter((record) => Boolean(record.target)).length;
+
+  element("review-batch").hidden = batchCount === 0;
+  text("review-batch", `Inspect ${batchCount} remaining corrections`);
 
   if (!(target instanceof HTMLTextAreaElement)) throw new Error("Review input missing");
 
@@ -559,6 +563,11 @@ function review(records) {
   text("prompt", current.prompt);
   text("answer", current.answer);
   text("rationale", current.teacher.rationale);
+  const approve = element("approve");
+
+  if (approve instanceof HTMLButtonElement) approve.disabled = !current.target || submitting;
+
+  target.hidden = !current.target;
 
   if (selectedId !== current.id) {
     target.value = current.target;
@@ -1147,6 +1156,112 @@ element("review-form").addEventListener("submit", async (event) => {
   } finally {
     submitting = false;
     approve.disabled = false;
+  }
+});
+
+element("discard").addEventListener("click", async () => {
+  if (submitting || !selectedId) return;
+
+  submitting = true;
+
+  try {
+    const response = await fetch("/api/discard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: selectedId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) throw new Error(result.error || "Discard failed");
+
+    selectedId = "";
+    await poll();
+  } catch (error) {
+    text("review-error", error instanceof Error ? error.message : "Discard failed");
+  } finally {
+    submitting = false;
+  }
+});
+
+element("review-batch").addEventListener("click", () => {
+  const dialog = element("batch-review");
+  const list = element("batch-items");
+
+  if (!(dialog instanceof HTMLDialogElement)) return;
+
+  list.replaceChildren();
+  text("batch-error", "");
+
+  for (const record of S?.records ?? []) {
+    if (record.status !== "pending" || !record.target) continue;
+
+    const item = document.createElement("section");
+    const prompt = document.createElement("p");
+    const answer = document.createElement("p");
+    const reason = document.createElement("p");
+    const label = document.createElement("label");
+    const target = document.createElement("textarea");
+
+    item.className = "batch-item";
+    prompt.textContent = `Customer: ${record.prompt}`;
+    answer.className = "batch-answer said";
+    answer.textContent = `Original answer: ${record.answer}`;
+    reason.textContent = record.teacher.rationale;
+    target.id = `batch-${record.id}`;
+    target.dataset.record = record.id;
+    target.value = record.target;
+    target.rows = 2;
+    target.maxLength = 2000;
+    label.htmlFor = target.id;
+    label.textContent = "Correction to train on";
+    item.append(prompt, answer, reason, label, target);
+    list.append(item);
+  }
+
+  dialog.showModal();
+});
+
+element("batch-close").addEventListener("click", () => {
+  const dialog = element("batch-review");
+
+  if (dialog instanceof HTMLDialogElement) dialog.close();
+});
+
+element("batch-approve").addEventListener("click", async () => {
+  if (submitting) return;
+
+  const button = element("batch-approve");
+
+  if (!(button instanceof HTMLButtonElement)) return;
+
+  const items = [...element("batch-items").querySelectorAll("textarea")].map((target) => ({ id: target.dataset.record, target: target.value }));
+
+  submitting = true;
+  button.disabled = true;
+
+  try {
+    const response = await fetch("/api/approve-batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) throw new Error(result.error || "Batch approval failed");
+
+    const dialog = element("batch-review");
+
+    if (dialog instanceof HTMLDialogElement) dialog.close();
+
+    selectedId = "";
+    await poll();
+  } catch (error) {
+    text("batch-error", error instanceof Error ? error.message : "Batch approval failed");
+  } finally {
+    submitting = false;
+    button.disabled = false;
   }
 });
 

@@ -190,6 +190,7 @@ header output[data-state="down"] { color: var(--text-dim); }
 .row h3 { font-size: 14px; font-weight: 600; margin: 1px 0 1px; }
 .row .num { text-align: right; }
 .row .num b { display: block; font-size: 24px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+#train-step { font-size: 16px; overflow-wrap: anywhere; }
 .row .num small { color: var(--text-mute); font-size: 13px; letter-spacing: .08em; }
 .row .num.warn b { color: var(--warn); }
 #stage-review[data-queue="0"] .num.warn b { color: var(--text); }
@@ -315,6 +316,19 @@ button { padding: 7px 14px; background: transparent; cursor: pointer; }
 button:disabled { cursor: wait; opacity: .5; }
 .review-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
 #review-error { color: var(--err); font-size: 13px; }
+#review-batch { flex: none; margin-top: 8px; text-align: left; }
+#batch-review { width: min(900px, calc(100vw - 32px)); height: min(760px, calc(100dvh - 32px)); padding: 20px; border: 1px solid var(--line); color: var(--text); background: var(--surface); }
+#batch-review[open] { display: flex; flex-direction: column; gap: 12px; }
+#batch-review::backdrop { background: rgba(30, 26, 22, .45); }
+.batch-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.batch-head h2 { font-size: 18px; }
+#batch-items { flex: 1; min-height: 0; overflow: auto; scrollbar-width: none; }
+#batch-items::-webkit-scrollbar { display: none; }
+.batch-item { padding: 12px 0; border-top: 1px solid var(--line); }
+.batch-item p { margin-bottom: 6px; overflow-wrap: anywhere; }
+.batch-item .batch-answer { color: var(--text-dim); }
+.batch-item textarea { resize: none; }
+#batch-error { color: var(--err); }
 
 /* ------------------------------------------------------- popup inspector */
 /* Click a conversation, a line, or a version and the whole record opens in
