@@ -1,0 +1,555 @@
+{
+  "schema_version": 1,
+  "public_bar_version": "1.1.3",
+  "generated_at": "2026-10-06T03:35:05Z",
+  "repository": "/Users/daaronch/code/second-brain/projects/demos/demo-edge-training-loop",
+  "commit": "78355200aee5ddd935d772bb3c1f5e6521b3b51f",
+  "lane": "all",
+  "tools": {
+    "expanso-edge": "v2.1.21",
+    "expanso-cli": "Expanso CLI version v2.1.21",
+    "playwright": "1.55.0",
+    "python": "3.12.13"
+  },
+  "criteria": {
+    "1": {
+      "name": "Runs",
+      "status": "PASS"
+    },
+    "2": {
+      "name": "Platform",
+      "status": "PASS"
+    },
+    "3": {
+      "name": "Structure",
+      "status": "PASS"
+    },
+    "4": {
+      "name": "Usability",
+      "status": "PASS"
+    },
+    "5": {
+      "name": "Regressions",
+      "status": "PASS"
+    }
+  },
+  "assertions": [
+    {
+      "criterion": 1,
+      "name": "manifest-schema",
+      "passed": true,
+      "detail": "public-bar.toml matches schema version 1",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "yaml-inventory",
+      "passed": true,
+      "detail": "classified 9 YAML files",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "collect-north:edge-validate",
+      "passed": true,
+      "detail": "expanso-edge validate passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "collect-north:job-validate",
+      "passed": true,
+      "detail": "expanso-cli offline job validation passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "collect-north:fixture",
+      "passed": true,
+      "detail": "local Edge replay matched 1 JSON records",
+      "evidence": {
+        "input_sha256": "fd9cf6ef86b55967a33b6f0471563c290c85e7c1961dcfe9980f935eaf63870d",
+        "actual_sha256": "fd9cf6ef86b55967a33b6f0471563c290c85e7c1961dcfe9980f935eaf63870d",
+        "expected_sha256": "fd9cf6ef86b55967a33b6f0471563c290c85e7c1961dcfe9980f935eaf63870d"
+      }
+    },
+    {
+      "criterion": 1,
+      "name": "collect-south:edge-validate",
+      "passed": true,
+      "detail": "expanso-edge validate passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "collect-south:job-validate",
+      "passed": true,
+      "detail": "expanso-cli offline job validation passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "collect-south:fixture",
+      "passed": true,
+      "detail": "local Edge replay matched 1 JSON records",
+      "evidence": {
+        "input_sha256": "fd9cf6ef86b55967a33b6f0471563c290c85e7c1961dcfe9980f935eaf63870d",
+        "actual_sha256": "fd9cf6ef86b55967a33b6f0471563c290c85e7c1961dcfe9980f935eaf63870d",
+        "expected_sha256": "fd9cf6ef86b55967a33b6f0471563c290c85e7c1961dcfe9980f935eaf63870d"
+      }
+    },
+    {
+      "criterion": 1,
+      "name": "teacher:edge-validate",
+      "passed": true,
+      "detail": "expanso-edge validate passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "teacher:job-validate",
+      "passed": true,
+      "detail": "expanso-cli offline job validation passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "teacher:fixture",
+      "passed": true,
+      "detail": "local Edge replay matched 1 JSON records",
+      "evidence": {
+        "input_sha256": "863654bbb724c9b9efe3c6bdea3eff8b67c5f9a4e01c4eb45ae75fc802a2f5b0",
+        "actual_sha256": "e59532f75b9bdc832a99943fdfa4783efd254b09d387f1083d853ff538365634",
+        "expected_sha256": "17fa9979d570d3e3c0a960e6f747b70a6aaf37214eed5e93cd2dcc5465fb28bb"
+      }
+    },
+    {
+      "criterion": 1,
+      "name": "training-trigger:edge-validate",
+      "passed": true,
+      "detail": "expanso-edge validate passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "training-trigger:job-validate",
+      "passed": true,
+      "detail": "expanso-cli offline job validation passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "training-trigger:fixture",
+      "passed": true,
+      "detail": "local Edge replay matched 1 JSON records",
+      "evidence": {
+        "input_sha256": "21be8651a2730aa3396177248f33781dd523ad904882e689a4ddfbcba4d185ee",
+        "actual_sha256": "593e52b5b17107123c6ac6445ea6819da64dc0a97fe4f13c3a213aece8830ca3",
+        "expected_sha256": "577dfb8372aded73e72cbab1a51e761dc5064c6f36002188a5d9c1120ec79978"
+      }
+    },
+    {
+      "criterion": 1,
+      "name": "rollout:edge-validate",
+      "passed": true,
+      "detail": "expanso-edge validate passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "rollout:job-validate",
+      "passed": true,
+      "detail": "expanso-cli offline job validation passed",
+      "evidence": {}
+    },
+    {
+      "criterion": 1,
+      "name": "rollout:fixture",
+      "passed": true,
+      "detail": "local Edge replay matched 1 JSON records",
+      "evidence": {
+        "input_sha256": "95a309209b8fab55484f2d966e6174f9d810caa23ce632c925d706d5515cb916",
+        "actual_sha256": "11dd3a324f957280866dbbadba53d361e9af20a5e1944ffdd28e89e040eaa899",
+        "expected_sha256": "bafff4cc1650f6273bb8daf841c5d4ad2cf7215ee1a04ed4c1c4799ff25797a5"
+      }
+    },
+    {
+      "criterion": 2,
+      "name": "platform-inventory",
+      "passed": true,
+      "detail": "declared 0 named platforms",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "explanation",
+      "passed": true,
+      "detail": "#explanation matched 1 element(s)",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "explorer",
+      "passed": true,
+      "detail": "#explorer matched 1 element(s)",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "run",
+      "passed": true,
+      "detail": "#run matched 1 element(s)",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "deploy",
+      "passed": true,
+      "detail": "#deploy matched 1 element(s)",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "stage:collect-north",
+      "passed": true,
+      "detail": "fixture-backed explorer stage exists",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "stage:collect-south",
+      "passed": true,
+      "detail": "fixture-backed explorer stage exists",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "stage:teacher",
+      "passed": true,
+      "detail": "fixture-backed explorer stage exists",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "stage:review",
+      "passed": true,
+      "detail": "fixture-backed explorer stage exists",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "stage:train",
+      "passed": true,
+      "detail": "fixture-backed explorer stage exists",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "stage:gate",
+      "passed": true,
+      "detail": "fixture-backed explorer stage exists",
+      "evidence": {}
+    },
+    {
+      "criterion": 3,
+      "name": "stage:rollout",
+      "passed": true,
+      "detail": "fixture-backed explorer stage exists",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "browser-contract",
+      "passed": true,
+      "detail": "rendered-browser declarations are complete",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "source-policy",
+      "passed": true,
+      "detail": "source avoids banned public-demo decoration",
+      "evidence": {}
+    },
+    {
+      "criterion": 5,
+      "name": "feature-manifest",
+      "passed": true,
+      "detail": "public-features.json matches schema version 1",
+      "evidence": {}
+    },
+    {
+      "criterion": 5,
+      "name": "baseline",
+      "passed": true,
+      "detail": "initial adoption: no prior retained-feature baseline exists",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "theme-default:320",
+      "passed": true,
+      "detail": "default theme reports light",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "overflow:320:light",
+      "passed": true,
+      "detail": "scrollWidth 320 <= clientWidth 320",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "contrast:320:light",
+      "passed": true,
+      "detail": "all visible text meets WCAG AA",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "axe:320:light",
+      "passed": true,
+      "detail": "axe found no WCAG A/AA violations",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "theme-dark:320",
+      "passed": true,
+      "detail": "toggle reports dark",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "overflow:320:dark",
+      "passed": true,
+      "detail": "scrollWidth 320 <= clientWidth 320",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "contrast:320:dark",
+      "passed": true,
+      "detail": "all visible text meets WCAG AA",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "axe:320:dark",
+      "passed": true,
+      "detail": "axe found no WCAG A/AA violations",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "theme-default:400",
+      "passed": true,
+      "detail": "default theme reports light",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "overflow:400:light",
+      "passed": true,
+      "detail": "scrollWidth 400 <= clientWidth 400",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "contrast:400:light",
+      "passed": true,
+      "detail": "all visible text meets WCAG AA",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "axe:400:light",
+      "passed": true,
+      "detail": "axe found no WCAG A/AA violations",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "theme-dark:400",
+      "passed": true,
+      "detail": "toggle reports dark",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "overflow:400:dark",
+      "passed": true,
+      "detail": "scrollWidth 400 <= clientWidth 400",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "contrast:400:dark",
+      "passed": true,
+      "detail": "all visible text meets WCAG AA",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "axe:400:dark",
+      "passed": true,
+      "detail": "axe found no WCAG A/AA violations",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "theme-default:768",
+      "passed": true,
+      "detail": "default theme reports light",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "overflow:768:light",
+      "passed": true,
+      "detail": "scrollWidth 768 <= clientWidth 768",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "contrast:768:light",
+      "passed": true,
+      "detail": "all visible text meets WCAG AA",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "axe:768:light",
+      "passed": true,
+      "detail": "axe found no WCAG A/AA violations",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "theme-dark:768",
+      "passed": true,
+      "detail": "toggle reports dark",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "overflow:768:dark",
+      "passed": true,
+      "detail": "scrollWidth 768 <= clientWidth 768",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "contrast:768:dark",
+      "passed": true,
+      "detail": "all visible text meets WCAG AA",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "axe:768:dark",
+      "passed": true,
+      "detail": "axe found no WCAG A/AA violations",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "theme-default:1440",
+      "passed": true,
+      "detail": "default theme reports light",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "overflow:1440:light",
+      "passed": true,
+      "detail": "scrollWidth 1440 <= clientWidth 1440",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "contrast:1440:light",
+      "passed": true,
+      "detail": "all visible text meets WCAG AA",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "axe:1440:light",
+      "passed": true,
+      "detail": "axe found no WCAG A/AA violations",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "theme-dark:1440",
+      "passed": true,
+      "detail": "toggle reports dark",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "overflow:1440:dark",
+      "passed": true,
+      "detail": "scrollWidth 1440 <= clientWidth 1440",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "contrast:1440:dark",
+      "passed": true,
+      "detail": "all visible text meets WCAG AA",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "axe:1440:dark",
+      "passed": true,
+      "detail": "axe found no WCAG A/AA violations",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "stage-keys",
+      "passed": true,
+      "detail": "Right and Left paged 6 stages; scroll stayed within 2px",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "json:#explorer-input:0",
+      "passed": true,
+      "detail": "JSON is valid and vertically pretty-printed",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "json:#explorer-output:0",
+      "passed": true,
+      "detail": "JSON is valid and vertically pretty-printed",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "control:copy-stage-input",
+      "passed": true,
+      "detail": "copy invoked=True, local success=True, forced failure=True",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "control:copy-stage-output",
+      "passed": true,
+      "detail": "copy invoked=True, local success=True, forced failure=True",
+      "evidence": {}
+    },
+    {
+      "criterion": 4,
+      "name": "teardown",
+      "passed": true,
+      "detail": "all declared services and browser hosts stopped",
+      "evidence": {}
+    }
+  ]
+}

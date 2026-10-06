@@ -58,3 +58,19 @@ Edge container, three local service containers, the presenter and Docker
 Desktop. Ports 8024-8027, 18101-18102, 18110 and 19011-19012 were clear after
 the run. The isolated browser session and its temporary presenter on 8124 were
 also stopped.
+
+## Re-run on public-bar 1.1.3 · 2026-10-06
+
+Source commit tested: `612f9270f153f2fb525167850aa7e3e3254930e1`, the checker vendored at `1.1.3`.
+Machine output:
+[`docs/evidence/public-bar-1.1.3-2026-10-06.json`](evidence/public-bar-1.1.3-2026-10-06.json).
+
+- `.demo-kit/public-bar.py --selftest` passed: 2 good fixtures accepted, 5
+  criterion-isolated failures each failed alone and were named.
+- `--lane all` passed criteria 1 to 5 with Expanso Edge `v2.1.21`, Playwright
+  `1.55.0` and axe-core `4.10.3`. No model call or metered key was used.
+- Declared services were stopped afterwards (`--teardown-only` reported none
+  running).
+
+The earlier sections above were produced on `1.1.0`, before the checker had a
+selftest.
