@@ -51,7 +51,7 @@ from bs4 import BeautifulSoup
 from jsonschema import Draft202012Validator
 
 
-PUBLIC_BAR_VERSION = "1.1.0"
+PUBLIC_BAR_VERSION = "1.1.3"
 CRITERIA = {
     1: "Runs",
     2: "Platform",
@@ -70,6 +70,7 @@ SKIP_PARTS = {
     "artifacts",
     "test-results",
     "__pycache__",
+    ".demo-kit",
 }
 PLATFORM_TERMS = {
     "kubernetes": re.compile(r"\bkubernetes\b|\bk8s\b", re.I),
@@ -182,11 +183,15 @@ def tracked_files(repo: Path) -> list[Path]:
         ["git", "-C", str(repo), "ls-files", "-z"], capture_output=True
     )
     if result.returncode == 0 and result.stdout:
-        return [repo / os.fsdecode(raw) for raw in result.stdout.split(b"\0") if raw]
+        paths = [repo / os.fsdecode(raw) for raw in result.stdout.split(b"\0") if raw]
+    else:
+        paths = [path for path in repo.rglob("*") if path.is_file()]
+    # The vendored checker and its deliberately failing selftest fixtures live
+    # in .demo-kit/; they are tooling, not the repo's published content.
     return [
         path
-        for path in repo.rglob("*")
-        if path.is_file() and not any(part in SKIP_PARTS for part in path.parts)
+        for path in paths
+        if not any(part in SKIP_PARTS for part in path.relative_to(repo).parts)
     ]
 
 
@@ -1105,7 +1110,24 @@ def static_lane(
     refs: list[str],
 ) -> None:
     classified_yaml(repo, manifest, audit)
-    check_pipelines(repo, manifest, audit, edge_binary, cli_binary)
+    processes: list[subprocess.Popen[str]] = []
+    services: list[dict[str, Any]] = []
+    ready_urls: list[str] = []
+    try:
+        if start_declared_services(
+            repo, manifest, audit, 1, processes, services, ready_urls
+        ):
+            check_pipelines(repo, manifest, audit, edge_binary, cli_binary)
+        else:
+            audit.add(
+                1,
+                "pipelines",
+                False,
+                "pipeline fixtures not run because a declared service did not start",
+            )
+    finally:
+        if services:
+            stop_declared_services(repo, audit, 1, processes, services, ready_urls)
     check_platforms(repo, manifest, audit)
     check_structure(repo, manifest, audit)
     check_browser_contract(manifest, audit)
@@ -1228,6 +1250,81 @@ def start_declared_process(command: list[str], repo: Path) -> subprocess.Popen[s
         stderr=subprocess.DEVNULL,
         text=True,
         start_new_session=True,
+    )
+
+
+def start_declared_services(
+    repo: Path,
+    manifest: dict[str, Any],
+    audit: Audit,
+    criterion: int,
+    processes: list[subprocess.Popen[str]],
+    services: list[dict[str, Any]],
+    ready_urls: list[str],
+) -> bool:
+    """Start every declared service; callers must stop them in a finally block."""
+    for service in manifest.get("services", []):
+        services.append(service)
+        try:
+            processes.append(start_declared_process(service["command"], repo))
+        except OSError as error:
+            audit.add(
+                criterion,
+                f"service:{service['id']}",
+                False,
+                f"fixture service did not start: {error}",
+            )
+            return False
+        ready_urls.append(service["ready_url"])
+        if not wait_for_url(service["ready_url"], processes):
+            audit.add(
+                criterion,
+                f"service:{service['id']}",
+                False,
+                "fixture service did not become ready",
+            )
+            return False
+        audit.add(
+            criterion,
+            f"service:{service['id']}",
+            True,
+            "declared fixture service is ready",
+        )
+    return True
+
+
+def stop_declared_services(
+    repo: Path,
+    audit: Audit,
+    criterion: int,
+    processes: list[subprocess.Popen[str]],
+    services: list[dict[str, Any]],
+    ready_urls: list[str],
+) -> None:
+    """Stop processes, run each stop_command even after failure, prove teardown."""
+    for process in reversed(processes):
+        stop_process_tree(process)
+    for service in reversed(services):
+        try:
+            stop = run_checked(service["stop_command"], repo, timeout=30)
+            failure = (
+                (stop.stderr or stop.stdout).strip() or "fixture service stop failed"
+                if stop.returncode
+                else ""
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            failure = f"fixture service stop failed: {error}"
+        if failure:
+            audit.add(criterion, f"service:{service['id']}:stop", False, failure)
+    leaked = [process.pid for process in processes if process.poll() is None]
+    live_urls = wait_for_urls_stopped(ready_urls)
+    audit.add(
+        criterion,
+        "teardown",
+        not leaked and not live_urls,
+        "all declared services and browser hosts stopped"
+        if not leaked and not live_urls
+        else f"processes still running: {leaked}; URLs still live: {live_urls}",
     )
 
 
@@ -1470,21 +1567,10 @@ def browser_lane(repo: Path, manifest: dict[str, Any], audit: Audit) -> None:
     services: list[dict[str, Any]] = []
     ready_urls: list[str] = []
     try:
-        for service in manifest.get("services", []):
-            services.append(service)
-            processes.append(start_declared_process(service["command"], repo))
-            ready_urls.append(service["ready_url"])
-            if not wait_for_url(service["ready_url"], processes):
-                audit.add(
-                    4,
-                    f"service:{service['id']}",
-                    False,
-                    "fixture service did not become ready",
-                )
-                return
-            audit.add(
-                4, f"service:{service['id']}", True, "declared fixture service is ready"
-            )
+        if not start_declared_services(
+            repo, manifest, audit, 4, processes, services, ready_urls
+        ):
+            return
         for platform in manifest.get("platforms", []):
             if not platform.get("probe_command"):
                 continue
@@ -1567,26 +1653,7 @@ def browser_lane(repo: Path, manifest: dict[str, Any], audit: Audit) -> None:
                 (presenter_stop.stderr or presenter_stop.stdout).strip()
                 or "presenter stop failed",
             )
-        for service in reversed(services):
-            stop = run_checked(service["stop_command"], repo, timeout=30)
-            if stop.returncode:
-                audit.add(
-                    4,
-                    f"service:{service['id']}:stop",
-                    False,
-                    (stop.stderr or stop.stdout).strip()
-                    or "fixture service stop failed",
-                )
-        leaked = [process.pid for process in processes if process.poll() is None]
-        live_urls = wait_for_urls_stopped(ready_urls)
-        audit.add(
-            4,
-            "teardown",
-            not leaked and not live_urls,
-            "all declared services and browser hosts stopped"
-            if not leaked and not live_urls
-            else f"processes still running: {leaked}; URLs still live: {live_urls}",
-        )
+        stop_declared_services(repo, audit, 4, processes, services, ready_urls)
 
 
 def teardown_only(repo: Path, manifest_path: Path) -> int:
@@ -1703,6 +1770,165 @@ def write_report(audit: Audit) -> None:
     json_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def initialize_selftest_repo(source: Path, overlay: Path | None, target: Path) -> None:
+    shutil.copytree(source, target)
+    shutil.copytree(source.parent / "bin", target / "bin")
+    for binary in (target / "bin").iterdir():
+        binary.chmod(0o755)
+    commands = (
+        ("init", "-q"),
+        ("config", "user.email", "public-bar@example.invalid"),
+        ("config", "user.name", "Public Bar Selftest"),
+        ("add", "."),
+        ("commit", "-qm", "fixture baseline"),
+    )
+    for command in commands:
+        result = subprocess.run(
+            ["git", *command],
+            cwd=target,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip() or "could not initialize fixture")
+    if overlay:
+        shutil.copytree(overlay, target, dirs_exist_ok=True)
+        result = subprocess.run(
+            ["git", "add", "."],
+            cwd=target,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode:
+            raise RuntimeError(
+                result.stderr.strip() or "could not stage fixture overlay"
+            )
+
+
+def run_selftest(script_dir: Path) -> int:
+    fixture_root = script_dir / "tests" / "fixtures" / "public-bar"
+    good = fixture_root / "pass"
+    bad_root = fixture_root / "fail"
+    service_overlay = fixture_root / "service"
+    missing = [
+        path
+        for path in [
+            good,
+            service_overlay,
+            *(bad_root / str(number) for number in CRITERIA),
+        ]
+        if not path.is_dir()
+    ]
+    if missing:
+        print(
+            "FAIL selftest: missing fixture directories: "
+            + ", ".join(str(path) for path in missing),
+            file=sys.stderr,
+        )
+        return 1
+
+    failures: list[str] = []
+    with tempfile.TemporaryDirectory(prefix="public-bar-selftest-") as raw:
+        temporary = Path(raw)
+        cases: list[tuple[str, int | None, Path | None]] = [
+            ("known-good", None, None),
+            ("service-pipeline", None, service_overlay),
+            *[
+                (f"criterion-{number}", number, bad_root / str(number))
+                for number in CRITERIA
+            ],
+        ]
+        for case_name, expected_criterion, overlay in cases:
+            repo = temporary / case_name
+            initialize_selftest_repo(good, overlay, repo)
+            report = repo / "artifacts" / "public-bar.md"
+            command = [
+                sys.executable,
+                str(script_dir / "public-bar.py"),
+                "--repo",
+                str(repo),
+                "--manifest",
+                "public-bar.toml",
+                "--report",
+                str(report),
+                "--lane",
+                "static",
+                "--base-ref",
+                "HEAD",
+                "--edge-binary",
+                str(repo / "bin" / "expanso-edge"),
+                "--cli-binary",
+                str(repo / "bin" / "expanso-cli"),
+            ]
+            result = subprocess.run(
+                command,
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            json_report = report.with_suffix(".json")
+            if not json_report.is_file():
+                failures.append(f"{case_name}: checker wrote no JSON report")
+                continue
+            payload = json.loads(json_report.read_text(encoding="utf-8"))
+            failed_criteria = sorted(
+                {
+                    int(assertion["criterion"])
+                    for assertion in payload["assertions"]
+                    if not assertion["passed"]
+                }
+            )
+            if expected_criterion is None:
+                asserted = {
+                    int(assertion["criterion"]) for assertion in payload["assertions"]
+                }
+                if (
+                    result.returncode != 0
+                    or failed_criteria
+                    or asserted != set(CRITERIA)
+                ):
+                    failures.append(
+                        f"{case_name}: expected all criterion checks to pass; "
+                        f"exit={result.returncode}, failed={failed_criteria}, "
+                        f"asserted={sorted(asserted)}"
+                    )
+                elif case_name == "service-pipeline" and not (
+                    (repo / "sidecar.stopped").is_file()
+                    and not url_reachable("http://127.0.0.1:4174/")
+                ):
+                    failures.append(
+                        f"{case_name}: declared service was not stopped afterward"
+                    )
+                else:
+                    print(f"PASS {case_name}: criteria 1-5 checks accepted the fixture")
+                continue
+            expected_name = f"FAIL {expected_criterion} {CRITERIA[expected_criterion]}:"
+            if (
+                result.returncode == 0
+                or failed_criteria != [expected_criterion]
+                or expected_name not in result.stderr
+            ):
+                failures.append(
+                    f"{case_name}: expected nonzero exit naming only criterion "
+                    f"{expected_criterion}; exit={result.returncode}, "
+                    f"failed={failed_criteria}"
+                )
+            else:
+                print(
+                    f"PASS criterion {expected_criterion} "
+                    f"{CRITERIA[expected_criterion]}: failed alone and was named"
+                )
+    if failures:
+        for failure in failures:
+            print(f"FAIL selftest: {failure}", file=sys.stderr)
+        return 1
+    print("ok: public-bar selftest (2 good, 5 criterion-isolated failures)")
+    return 0
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path("."))
@@ -1714,18 +1940,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cli-binary", default="expanso-cli")
     parser.add_argument("--schema-dir", type=Path)
     parser.add_argument("--teardown-only", action="store_true")
+    parser.add_argument(
+        "--selftest",
+        action="store_true",
+        help="run known-good and criterion-isolated fixture repositories",
+    )
     parser.add_argument("--version", action="version", version=PUBLIC_BAR_VERSION)
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    script_dir = Path(__file__).resolve().parent
+    if args.selftest:
+        return run_selftest(script_dir)
     repo = args.repo.resolve()
     manifest_path = (
         args.manifest if args.manifest.is_absolute() else repo / args.manifest
     )
     report = args.report if args.report.is_absolute() else repo / args.report
-    script_dir = Path(__file__).resolve().parent
     schema_dir = args.schema_dir.resolve() if args.schema_dir else script_dir
     audit = Audit(repo=repo, report=report, lane=args.lane)
     if args.teardown_only:
