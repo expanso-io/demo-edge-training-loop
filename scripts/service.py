@@ -23,6 +23,7 @@ MODEL_SLOTS = threading.BoundedSemaphore(1)
 TEACHER_SLOT = threading.BoundedSemaphore(1)
 TEACHER_STARTED = 0.0
 ROLE = os.environ.get('TRAIN_ROLE', 'training')
+FIXTURE = os.environ.get('TRAIN_LOOP_FIXTURE') == '1'
 TEACHER_URL = os.environ.get('TEACHER_URL', 'http://host.docker.internal:11434/api/chat')
 
 
@@ -87,6 +88,24 @@ def grade(data):
                            (json.dumps(teacher), '', 'graded', data['id']))
             event('collect', f"Transcript received from {data['site']}")
             event('selection', f"Filtered {data['id']}: {reason}")
+            return {'id': data['id'], 'teacher': teacher}
+        if FIXTURE:
+            reference = 'order number' if data['kind'] == 'refund' else 'booking reference'
+            target = (f'Please provide your {reference} so I can check refund eligibility.'
+                      if data['kind'] == 'refund'
+                      else f'Please provide your {reference} before I check availability.')
+            teacher = {
+                'verdict': 'fail',
+                'corrected_target': target,
+                'confidence': 0.99,
+                'rationale': f'The recorded answer must request the {reference} first.',
+                'source': 'recorded-proof',
+            }
+            with connect() as db:
+                db.execute('UPDATE records SET teacher=?,target=?,status=? WHERE id=?',
+                           (json.dumps(teacher), teacher['corrected_target'], 'graded', data['id']))
+            event('collect', f"Transcript received from {data['site']}")
+            event('teacher', f"Recorded teacher result used for {data['id']}")
             return {'id': data['id'], 'teacher': teacher}
         if time.monotonic() - TEACHER_STARTED < 5:
             raise RuntimeError('Teacher rate cap; retry after five seconds')

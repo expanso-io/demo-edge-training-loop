@@ -17,6 +17,7 @@
     <span class="sub">LOCAL LEARNING LOOP &middot; TEXT SUPPORT &middot; SYNTHETIC</span>
   </div>
   <p class="orchestrated" id="orchestrated">CONNECTING TO TRAINING NODE</p>
+  <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark theme</button>
   <output id="state-badge" data-state="down">STANDBY</output>
 </header>
 
@@ -150,6 +151,42 @@
         </div>
       </div>
     </div>
+  </section>
+
+  <section class="explorer" id="explorer" aria-labelledby="explorer-title">
+    <div class="explorer-head">
+      <div>
+        <h2 id="explorer-title">Follow one measured record</h2>
+        <p>Real input and output retained from the verified local run.</p>
+      </div>
+      <nav aria-label="Pipeline stages">
+        <button type="button" id="stage-previous" aria-label="Previous stage">&larr; Previous</button>
+        <output id="stage-position">1 of 6</output>
+        <button type="button" id="stage-next" aria-label="Next stage">Next &rarr;</button>
+      </nav>
+    </div>
+    <article class="explorer-card" aria-live="polite">
+      <div class="explorer-summary">
+        <span id="explorer-number">01</span>
+        <div>
+          <h3 id="explorer-stage">Collect</h3>
+          <p id="explorer-description"></p>
+        </div>
+      </div>
+      <div class="explorer-data">
+        <section>
+          <header><h4>Input</h4><button type="button" data-copy="input">Copy input</button></header>
+          <pre id="explorer-input" tabindex="0"></pre>
+          <p class="copy-result" id="copy-input-result" role="status"></p>
+        </section>
+        <section>
+          <header><h4>Output</h4><button type="button" data-copy="output">Copy output</button></header>
+          <pre id="explorer-output" tabindex="0"></pre>
+          <p class="copy-result" id="copy-output-result" role="status"></p>
+        </section>
+      </div>
+    </article>
+    <p class="explorer-help">Use Left and Right to page stages. Your scroll position stays put.</p>
   </section>
 
   <section class="panels">

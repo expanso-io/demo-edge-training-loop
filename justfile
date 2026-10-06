@@ -63,6 +63,10 @@ pipeline-check:
 produce count="16":
     uv run -s scripts/producer.py --count {{count}}
 
+# Recorded answers only: exercises all five Cloud jobs without a model call.
+public-bar-proof:
+    uv run -s scripts/public_bar_fixture.py
+
 check: test validate pipeline-check video-check motion-check clean-check
 
 # everything that must be true before a take: gates + live endpoint + checklist

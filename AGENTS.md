@@ -5,7 +5,8 @@ them. Build order: claim → beat script → components on the showcase →
 port the winners here → `just check`.
 
 - The claim: **Train where the data lives: the sites collect, a local teacher grades, people approve the hard calls, and only a model that beats the last one ships back** — every element on screen serves it or gets cut.
-- Palette: **light**, warm (declared as `color-scheme` in `dashboard/styles.css`);
+- Palette: **light by default**, warm, with an explicit dark toggle (declared as
+  `color-scheme` in `dashboard/styles.css`);
   chosen on 2026-10-03 from the subject: conversations read by a person are a
   transcript on a desk, so the ground is linen and the spoken words are a
   vendored serif. The previous dark board was Space Force with the labels

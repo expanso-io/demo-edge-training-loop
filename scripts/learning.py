@@ -1,6 +1,7 @@
 """Local CPU LoRA training and deterministic held-out inference."""
 import hashlib
 import json
+import os
 import threading
 import time
 from pathlib import Path
@@ -17,6 +18,7 @@ MODEL = 'HuggingFaceTB/SmolLM2-135M-Instruct'
 REVISION = '12fd25f77366fa6b3b4b768ec3050bf629380bac'
 LOCK = threading.Lock()
 MODEL_STATE = {'version': None, 'model': None, 'tokenizer': None}
+FIXTURE = os.environ.get('TRAIN_LOOP_FIXTURE') == '1'
 torch.set_num_threads(4)
 
 
@@ -40,6 +42,13 @@ def prompt_tokens(tokenizer, prompt):
 
 
 def answer_unlocked(prompt, version='base'):
+    if FIXTURE:
+        kind = next((kind for kind, held_prompt in HELD_OUT if held_prompt == prompt), 'refund')
+        if version == 'base':
+            return "I'm sorry, I cannot help with that request."
+        if kind == 'booking':
+            return 'Please provide your booking reference before I check availability.'
+        return 'Please provide your order number so I can check refund eligibility.'
     model, tokenizer = load(version)
     tokens = prompt_tokens(tokenizer, prompt)
     with torch.inference_mode():
@@ -66,6 +75,29 @@ def evaluate(version):
 def train(rows, version, current):
     with LOCK:
         started = time.monotonic()
+        if FIXTURE:
+            baseline = evaluate(current)
+            destination = STATE / 'adapters' / version
+            destination.mkdir(parents=True, exist_ok=False)
+            weights = b'expanso-public-bar-recorded-adapter-v1'
+            (destination / 'adapter_model.safetensors').write_bytes(weights)
+            (destination / 'adapter_config.json').write_text(json.dumps({
+                'base_model_name_or_path': MODEL,
+                'fixture': 'recorded-public-bar',
+            }, indent=2))
+            put('training', {'status': 'evaluating', 'version': version})
+            candidate = evaluate(version)
+            digest = hashlib.sha256(weights).hexdigest()
+            passed = improved(baseline, candidate)
+            result = {'version': version, 'status': 'passed' if passed else 'rejected',
+                      'reason': 'Improved without regression' if passed else 'No safe improvement',
+                      'baseline': baseline, 'candidate': candidate, 'sha256': digest,
+                      'seconds': round(time.monotonic() - started, 3),
+                      'training_ids': [row['id'] for row in rows],
+                      'held_out_sha256': hashlib.sha256(json.dumps(HELD_OUT).encode()).hexdigest()}
+            (destination / 'evaluation.json').write_text(json.dumps(result, indent=2))
+            event('gate', result['reason'])
+            return result
         torch.manual_seed(7)
         baseline = evaluate(current)
         MODEL_STATE.update(version=None, model=None, tokenizer=None)

@@ -11,6 +11,11 @@ pipelines; all conversation bodies, model inference and training stay on this
 Mac. Cloud receives job metadata, operational logs and metrics. The logs contain
 record identifiers and processing status, not conversation bodies.
 
+Below the live board, the stage explorer follows one retained record through
+collect, teacher, review, train, gate and rollout. Each page shows the real JSON
+input and output from the verified local run. Use Left and Right to page without
+losing your scroll position; each JSON panel reports its own copy result.
+
 ## Run on this Mac
 
 Prerequisites: Docker Desktop, Ollama with `mistral-small:24b`, Expanso Edge and
@@ -43,6 +48,10 @@ requests, with unique record IDs; held-out requests stay excluded. It stops
 with `just down`. Generation runs off camera. Read each correction on the
 board and approve or fix it. See [RECORDING_SCRIPT.md](RECORDING_SCRIPT.md) for
 the rejected first batch and the complete take.
+
+The page itself carries the explanation and stage explorer. This section is the
+run path; the Cloud deployment path is the `up` lifecycle above, which deploys
+the five jobs stopped before the presenter starts them in Cloud.
 
 ```sh
 just rollback

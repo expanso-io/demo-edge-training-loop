@@ -21,6 +21,11 @@ const SEATS = 4;
 
 const SITES = /** @type {const} */ (["north", "south"]);
 
+/** @type {import("./contracts").ExplorerStage[]} */
+let explorerStages = [];
+
+let explorerIndex = 0;
+
 const RATE = {
   customer: 0.55,   // ambient customer messages per seat, per second
   seat: 0.3,        // ambient transcripts leaving each seat
@@ -76,6 +81,70 @@ function text(id, value) {
 /** @param {string} id @param {string} value */
 function setState(id, value) {
   element(id).dataset.state = value;
+}
+
+/* ------------------------------------------------------------ explorer */
+
+/** @param {"light" | "dark"} theme */
+function applyTheme(theme) {
+  const dark = theme === "dark";
+
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  element("theme-toggle").textContent = dark ? "Light theme" : "Dark theme";
+  element("theme-toggle").setAttribute("aria-pressed", String(dark));
+}
+
+function renderExplorer() {
+  const item = explorerStages[explorerIndex];
+
+  if (!item) return;
+
+  text("explorer-number", String(explorerIndex + 1).padStart(2, "0"));
+  text("explorer-stage", item.name);
+  text("explorer-description", item.description);
+  text("explorer-input", JSON.stringify(item.input, null, 2));
+  text("explorer-output", JSON.stringify(item.output, null, 2));
+  text("stage-position", `${explorerIndex + 1} of ${explorerStages.length}`);
+  text("copy-input-result", "");
+  text("copy-output-result", "");
+}
+
+/** @param {number} delta */
+function pageExplorer(delta) {
+  if (!explorerStages.length) return;
+
+  const explorer = element("explorer");
+  const top = explorer.getBoundingClientRect().top;
+
+  explorerIndex = (explorerIndex + delta + explorerStages.length) % explorerStages.length;
+  renderExplorer();
+  window.scrollBy(0, explorer.getBoundingClientRect().top - top);
+}
+
+async function loadExplorer() {
+  const response = await fetch("stage-explorer.json", { cache: "no-store" });
+
+  if (!response.ok) throw new Error("Stage records unavailable");
+
+  explorerStages = await response.json();
+  renderExplorer();
+}
+
+/** @param {string} side */
+async function copyExplorer(side) {
+  const item = explorerStages[explorerIndex];
+  const result = element(`copy-${side}-result`);
+
+  if (!item || !(side === "input" || side === "output")) return;
+
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(item[side], null, 2));
+    result.dataset.state = "success";
+    result.textContent = `${side === "input" ? "Input" : "Output"} copied`;
+  } catch {
+    result.dataset.state = "error";
+    result.textContent = "Copy failed. Select the JSON and copy it manually.";
+  }
 }
 
 const stage = element("stage");
@@ -1124,7 +1193,40 @@ function openSeat(site, seat) {
 element("popup").addEventListener("click", hidePopup);
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") hidePopup();
+  if (event.key === "Escape") {
+    hidePopup();
+
+    return;
+  }
+
+  const target = event.target;
+
+  const typing = target instanceof HTMLElement
+    && (target.matches("input, textarea, select, button") || target.isContentEditable);
+
+  if (typing || element("batch-review").hasAttribute("open")) return;
+
+  if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    event.preventDefault();
+    pageExplorer(event.key === "ArrowLeft" ? -1 : 1);
+  }
+});
+
+element("stage-previous").addEventListener("click", () => pageExplorer(-1));
+
+element("stage-next").addEventListener("click", () => pageExplorer(1));
+
+element("explorer").addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("button[data-copy]") : null;
+
+  if (button instanceof HTMLButtonElement && button.dataset.copy) void copyExplorer(button.dataset.copy);
+});
+
+element("theme-toggle").addEventListener("click", () => {
+  const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+
+  localStorage.setItem("train-loop-theme", theme);
+  applyTheme(theme);
 });
 
 element("feed").addEventListener("click", (event) => {
@@ -1306,6 +1408,12 @@ element("batch-approve").addEventListener("click", async () => {
 resize();
 
 drawRing(undefined);
+
+applyTheme(localStorage.getItem("train-loop-theme") === "dark" ? "dark" : "light");
+
+loadExplorer().catch((error) => {
+  text("explorer-description", error instanceof Error ? error.message : "Stage records unavailable");
+});
 
 requestAnimationFrame(frame);
 

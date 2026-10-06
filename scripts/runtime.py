@@ -90,7 +90,7 @@ def start_edges():
          '--data-dir', '/data', '--config', '/config/training.yaml', '--no-watch'])
 
 
-def start_services():
+def start_services(fixture=False, simulator=True):
     RUNTIME.mkdir(mode=0o700, exist_ok=True)
     if any(alive(path) for path in RUNTIME.glob('*.pid')):
         raise RuntimeError('Already running; use down before up')
@@ -112,6 +112,8 @@ def start_services():
         args = ['docker', 'run', '-d', '--name', f'train-loop-{role}', '--label', 'demo=demo-edge-training-loop',
                 '-p', f'127.0.0.1:{port}:8025', '-v', f'{directory}:/state',
                 '-v', f'{ROOT / ".models"}:/state/models', '-e', 'TRAIN_STATE=/state', '-e', f'TRAIN_ROLE={role}']
+        if fixture:
+            args += ['-e', 'TRAIN_LOOP_FIXTURE=1']
         if role == 'training':
             args += ['-p', '127.0.0.1:18110:18110']
         run(args + ['train-loop-local'])
@@ -119,8 +121,10 @@ def start_services():
     start_edges()
     spawn('dashboard', ['uv', 'run', '-s', str(ROOT / 'scripts/dashboard.py'), '--port', '8024'])
     wait_http(8024)
-    spawn('simulator', ['uv', 'run', '-s', str(ROOT / 'scripts/producer.py'), '--continuous'])
-    print('Local services and conversation simulator ready at http://localhost:8024.')
+    if simulator:
+        spawn('simulator', ['uv', 'run', '-s', str(ROOT / 'scripts/producer.py'), '--continuous'])
+    mode = 'recorded proof fixtures' if fixture else 'conversation simulator'
+    print(f'Local services and {mode} ready at http://localhost:8024.')
 
 
 def up():

@@ -1,0 +1,100 @@
+[
+  {
+    "id": "collect",
+    "name": "Collect",
+    "description": "The North site sends one local assistant conversation into the collect-north pipeline.",
+    "input": {
+      "id": "north-001",
+      "site": "north",
+      "kind": "refund",
+      "version": "base",
+      "prompt": "Can I have a refund?",
+      "answer": "Yes, please, I can get you a refund."
+    },
+    "output": {
+      "id": "north-001",
+      "delivered_to": "training-node:/transcript",
+      "receipt": "Transcript received from north"
+    }
+  },
+  {
+    "id": "teacher",
+    "name": "Teacher",
+    "description": "The local teacher grades the answer against the policy and proposes a correction.",
+    "input": {
+      "id": "north-001",
+      "kind": "refund",
+      "prompt": "Can I have a refund?",
+      "answer": "Yes, please, I can get you a refund."
+    },
+    "output": {
+      "id": "north-001",
+      "verdict": "fail",
+      "confidence": 0.9,
+      "corrected_target": "I can check your eligibility for a refund. Please provide your order number.",
+      "rationale": "The agent did not ask for the order number before checking eligibility for a refund."
+    }
+  },
+  {
+    "id": "review",
+    "name": "Review",
+    "description": "A person keeps the useful correction before it can enter the training batch.",
+    "input": {
+      "id": "north-001",
+      "teacher_confidence": 0.9,
+      "status": "pending",
+      "proposed_target": "I can check your eligibility for a refund. Please provide your order number."
+    },
+    "output": {
+      "id": "north-001",
+      "decision": "approved",
+      "target": "I can check your eligibility for a refund. Please provide your order number."
+    }
+  },
+  {
+    "id": "train",
+    "name": "Train",
+    "description": "The inspected local batch trains a LoRA adapter without moving conversation bodies to Cloud.",
+    "input": {
+      "approved_records": 17,
+      "training_ids_include": ["north-001", "first-pass-01", "first-pass-16"],
+      "base_model": "HuggingFaceTB/SmolLM2-135M-Instruct"
+    },
+    "output": {
+      "version": "v2",
+      "seconds": 159.2,
+      "adapter_sha256": "66efcb0937d43fc491c415393942fddf61e5a83ce1f2646c46da21da37553200"
+    }
+  },
+  {
+    "id": "gate",
+    "name": "Gate",
+    "description": "The candidate must beat the current model on the fixed held-out policy exercise.",
+    "input": {
+      "candidate": "v2",
+      "held_out_requests": 8,
+      "held_out_sha256": "3512dcbaa165deaf50b357efdcf65a0a27617aa5d0b20747b1b15c4f363096c1"
+    },
+    "output": {
+      "status": "passed",
+      "reason": "Improved without regression",
+      "current": "0/8",
+      "candidate": "8/8"
+    }
+  },
+  {
+    "id": "rollout",
+    "name": "Rollout",
+    "description": "Expanso carries the accepted adapter to North first, then South, and records both local checks.",
+    "input": {
+      "version": "v2",
+      "adapter_sha256": "66efcb0937d43fc491c415393942fddf61e5a83ce1f2646c46da21da37553200",
+      "order": ["north", "south"]
+    },
+    "output": {
+      "status": "received",
+      "sites": {"north": "v2", "south": "v2"},
+      "receipt": "Both sites activated the checked adapter"
+    }
+  }
+]

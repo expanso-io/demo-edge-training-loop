@@ -135,6 +135,16 @@ class SelectionTests(unittest.TestCase):
             self.assertEqual(db.execute("SELECT COUNT(*) FROM events WHERE stage='teacher'").fetchone()[0], 0)
             self.assertEqual(db.execute("SELECT COUNT(*) FROM events WHERE stage='selection'").fetchone()[0], 2)
 
+    def test_recorded_proof_teacher_never_calls_model(self):
+        kind, prompt = TRAIN[0]
+        payload = {'id': 'proof-01', 'kind': kind, 'site': 'north',
+                   'prompt': prompt, 'answer': 'I cannot help.', 'version': 'base'}
+        with patch.object(service, 'FIXTURE', True), \
+             patch.object(service, 'request_json', side_effect=AssertionError('Model called')):
+            result = service.grade(payload)
+        self.assertEqual(result['teacher']['source'], 'recorded-proof')
+        self.assertEqual(service.review({'id': payload['id']})['status'], 'approved')
+
     def test_unique_low_confidence_correction_stays_pending(self):
         self.add('one')
         self.assertEqual(service.review({'id': 'one'})['status'], 'pending')

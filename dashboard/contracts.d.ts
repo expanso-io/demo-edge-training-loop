@@ -108,3 +108,11 @@ export interface Particle {
   /** runs once when the particle reaches the end of its lane */
   arrive?: () => void;
 }
+
+export interface ExplorerStage {
+  id: string;
+  name: string;
+  description: string;
+  input: object;
+  output: object;
+}
