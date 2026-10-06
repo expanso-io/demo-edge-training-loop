@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "public_bar_version": "1.1.0",
+  "kit_commit": "b2420c4cf9d8b81ec95bd2e03d9f377945bec644",
+  "files": {
+    ".demo-kit/public-bar.py": "b9c60ded295e273a6aaf124a62db2f3e5f6f4f0db6f5a13ee9518d67312a3c60",
+    ".demo-kit/public-bar.schema.json": "8d12511befede3fb3cc56d54dba180bd3a783398a42a3fcbcf4d7ce5da98099a",
+    ".demo-kit/public-features.schema.json": "14d422103a6eb687945f064952166fa1fa58256d53a2ac2503e5d5429995a62f",
+    ".github/workflows/public-bar.yml": "84113c163b085d355f2425fcc8ece474f0ac23bbf98992bdb5c17d9c20644766"
+  }
+}
