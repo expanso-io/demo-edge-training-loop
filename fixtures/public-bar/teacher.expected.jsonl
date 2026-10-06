@@ -1,0 +1,1 @@
+{"id":"public-bar-teacher-01","teacher":{"verdict":"fail","confidence":0.99,"corrected_target":"Please provide your order number so I can check refund eligibility.","rationale":"The recorded answer must request the order number first.","source":"recorded-proof"}}

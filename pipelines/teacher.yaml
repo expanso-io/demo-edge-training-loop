@@ -19,14 +19,21 @@ config:
           level: INFO
           message: 'Teacher starting id=${! this.id }'
       - label: grade_transcript
-        http:
-          url: http://127.0.0.1:8025/grade
-          verb: POST
-          headers:
-            Content-Type: application/json
-          timeout: 240s
-          retries: 10
-          retry_period: 5s
+        switch:
+          - check: this.public_bar_fixture == true
+            processors:
+              - label: use_recorded_teacher_result
+                mapping: root = this.expected_output
+          - processors:
+              - label: call_local_teacher
+                http:
+                  url: http://127.0.0.1:8025/grade
+                  verb: POST
+                  headers:
+                    Content-Type: application/json
+                  timeout: 240s
+                  retries: 10
+                  retry_period: 5s
       - label: log_teacher_result
         log:
           level: INFO

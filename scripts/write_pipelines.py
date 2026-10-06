@@ -64,14 +64,21 @@ text = header('teacher', 'training') + '''  input:
           level: INFO
           message: 'Teacher starting id=${! this.id }'
       - label: grade_transcript
-        http:
-          url: http://127.0.0.1:8025/grade
-          verb: POST
-          headers:
-            Content-Type: application/json
-          timeout: 240s
-          retries: 10
-          retry_period: 5s
+        switch:
+          - check: this.public_bar_fixture == true
+            processors:
+              - label: use_recorded_teacher_result
+                mapping: root = this.expected_output
+          - processors:
+              - label: call_local_teacher
+                http:
+                  url: http://127.0.0.1:8025/grade
+                  verb: POST
+                  headers:
+                    Content-Type: application/json
+                  timeout: 240s
+                  retries: 10
+                  retry_period: 5s
       - label: log_teacher_result
         log:
           level: INFO
@@ -87,13 +94,20 @@ text = header('training-trigger', 'training') + '''  input:
   pipeline:
     processors:
       - label: trigger_training
-        http:
-          url: http://127.0.0.1:8025/tick
-          verb: POST
-          headers:
-            Content-Type: application/json
-          retries: 10
-          retry_period: 5s
+        switch:
+          - check: this.public_bar_fixture == true
+            processors:
+              - label: use_recorded_training_receipt
+                mapping: root = this.expected_output
+          - processors:
+              - label: call_local_training_service
+                http:
+                  url: http://127.0.0.1:8025/tick
+                  verb: POST
+                  headers:
+                    Content-Type: application/json
+                  retries: 10
+                  retry_period: 5s
       - label: log_training_status
         log:
           level: INFO
@@ -115,21 +129,28 @@ text = header('rollout', 'site') + '''  input:
   pipeline:
     processors:
       - label: fetch_site_bundle
-        http:
-          url: http://127.0.0.1:8025/bundle/${! this.site }
-          verb: GET
-          timeout: 120s
-          retries: 10
-          retry_period: 5s
-      - label: install_adapter
-        http:
-          url: http://127.0.0.1:${! env("TRAIN_LOOP_INSTALL_PORT") }/install
-          verb: POST
-          headers:
-            Content-Type: application/json
-          timeout: 120s
-          retries: 10
-          retry_period: 5s
+        switch:
+          - check: this.public_bar_fixture == true
+            processors:
+              - label: use_recorded_rollout_receipt
+                mapping: root = this.expected_output
+          - processors:
+              - label: fetch_local_site_bundle
+                http:
+                  url: http://127.0.0.1:8025/bundle/${! this.site }
+                  verb: GET
+                  timeout: 120s
+                  retries: 10
+                  retry_period: 5s
+              - label: install_local_adapter
+                http:
+                  url: http://127.0.0.1:${! env("TRAIN_LOOP_INSTALL_PORT") }/install
+                  verb: POST
+                  headers:
+                    Content-Type: application/json
+                  timeout: 120s
+                  retries: 10
+                  retry_period: 5s
       - label: log_release
         log:
           level: INFO

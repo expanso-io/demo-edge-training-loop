@@ -107,6 +107,12 @@ function renderExplorer() {
   text("stage-position", `${explorerIndex + 1} of ${explorerStages.length}`);
   text("copy-input-result", "");
   text("copy-output-result", "");
+  element("explorer").querySelectorAll("[data-stage-id]").forEach((stageNode) => {
+    if (!(stageNode instanceof HTMLElement)) return;
+
+    if (stageNode.dataset.stageId === item.id) stageNode.setAttribute("aria-current", "step");
+    else stageNode.removeAttribute("aria-current");
+  });
 }
 
 /** @param {number} delta */

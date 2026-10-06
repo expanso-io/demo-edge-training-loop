@@ -37,11 +37,11 @@
     <div class="boundary" id="boundary" aria-hidden="true"></div>
 
     <div class="sites-col">
-      <div class="col-head"><span class="kicker">ASSISTANT SITES</span><span class="col-sub">customers write in</span></div>
+      <div class="col-head"><span class="machine-label">ASSISTANT SITES</span><span class="col-sub">customers write in</span></div>
 
       <div class="card site" id="site-north" data-site="north" data-version="base">
         <div class="site-head">
-          <div><span class="kicker">SITE &middot; NORTH</span><h2>North assistants</h2></div>
+          <div><span class="machine-label">SITE &middot; NORTH</span><h2>North assistants</h2></div>
           <span class="version"><svg class="icon" aria-hidden="true"><use href="icons.svg#layers"/></svg><b id="north-version">base</b></span>
         </div>
         <div class="floor" id="floor-north" aria-label="North conversation lines">
@@ -59,7 +59,7 @@
 
       <div class="card site" id="site-south" data-site="south" data-version="base">
         <div class="site-head">
-          <div><span class="kicker">SITE &middot; SOUTH</span><h2>South assistants</h2></div>
+          <div><span class="machine-label">SITE &middot; SOUTH</span><h2>South assistants</h2></div>
           <span class="version"><svg class="icon" aria-hidden="true"><use href="icons.svg#layers"/></svg><b id="south-version">base</b></span>
         </div>
         <div class="floor" id="floor-south" aria-label="South conversation lines">
@@ -78,7 +78,7 @@
 
     <div class="node-col">
       <div class="card orchestrator" id="node-orch">
-        <span class="kicker">EXPANSO CLOUD</span>
+        <span class="machine-label">EXPANSO CLOUD</span>
         <h2>Orchestrator</h2>
         <p class="meta" id="cloud-jobs">checking jobs</p>
         <p class="note">schedules the loop &middot; sees zero conversations</p>
@@ -87,7 +87,7 @@
       <div class="card edge" id="node-edge">
         <div class="edge-head">
           <img class="logo" src="expanso-logo.png" alt="Expanso">
-          <div><span class="kicker">CUSTOMER EDGE NODE</span><h2>Training node</h2></div>
+          <div><span class="machine-label">CUSTOMER EDGE NODE</span><h2>Training node</h2></div>
         </div>
         <span class="pipes"><i data-pipe="collect-north">collect-north</i><i data-pipe="collect-south">collect-south</i><i data-pipe="teacher">teacher</i><i data-pipe="training-trigger">training-trigger</i><i data-pipe="rollout">rollout</i></span>
         <p class="why" id="edge-why" hidden></p>
@@ -95,28 +95,28 @@
         <div class="stages">
           <div class="row" id="stage-teacher" data-live="false">
             <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#rubric"/></svg></span>
-            <div class="what"><span class="kicker">TEACHER</span><h3>corrects new mistakes</h3><p class="meta">mistral-small 24B &middot; proposes a correction</p></div>
+            <div class="what"><span class="machine-label">TEACHER</span><h3>corrects new mistakes</h3><p class="meta">mistral-small 24B &middot; proposes a correction</p></div>
             <div class="num"><b id="graded">0</b><small>GRADED</small></div>
             <div class="bars split" id="teacher-split" aria-label="Teacher verdicts"><div class="track"><i data-part="pass"></i><i data-part="person"></i><i data-part="grading"></i></div><span id="teacher-split-label">&mdash;</span></div>
           </div>
 
           <div class="row" id="stage-review" data-live="false">
             <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#headset"/></svg></span>
-            <div class="what"><span class="kicker">SELECT &amp; REVIEW</span><h3>keep useful corrections</h3><p class="meta">skip repeats and correct answers; discard unsuitable input</p></div>
+            <div class="what"><span class="machine-label">SELECT &amp; REVIEW</span><h3>keep useful corrections</h3><p class="meta">skip repeats and correct answers; discard unsuitable input</p></div>
             <div class="num warn"><b id="review-count">0</b><small>WAITING</small></div>
             <div class="bars queue" id="queue" aria-label="Approved for training"><span id="approved-label">0 approved for training</span></div>
           </div>
 
           <div class="row" id="stage-train" data-live="false">
             <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#layers"/></svg></span>
-            <div class="what"><span class="kicker">LoRA TRAIN</span><h3>fine-tunes the 135M student</h3><p class="meta" id="train-meta">needs 8 approved corrections to start</p></div>
+            <div class="what"><span class="machine-label">LoRA TRAIN</span><h3>fine-tunes the 135M student</h3><p class="meta" id="train-meta">needs 8 approved corrections to start</p></div>
             <div class="num"><b id="train-step">&ndash;</b><small id="train-label">STEPS</small></div>
             <div class="bars progress" aria-label="Training progress"><i><b id="train-bar"></b></i><span id="train-pct">idle</span></div>
           </div>
 
           <div class="row" id="stage-gate" data-live="false" data-result="">
             <span class="glyph"><svg class="icon" aria-hidden="true"><use href="icons.svg#gate"/></svg></span>
-            <div class="what"><span class="kicker">GATE</span><h3>8 held-out requests</h3><p class="meta" id="gate-meta">ships only if it beats the current model</p></div>
+            <div class="what"><span class="machine-label">GATE</span><h3>8 held-out requests</h3><p class="meta" id="gate-meta">ships only if it beats the current model</p></div>
             <div class="num"><b id="gate-score">&ndash;</b><small id="gate-label">GATE</small></div>
             <div class="bars checks" aria-label="Held-out policy checks">
               <div class="checkrow"><em>current</em><span id="checks-base"></span></div>
@@ -128,7 +128,7 @@
     </div>
 
     <div class="release-col">
-      <div class="col-head"><span class="kicker ok">RELEASE</span><span class="col-sub">canary first</span></div>
+      <div class="col-head"><span class="machine-label ok">RELEASE</span><span class="col-sub">canary first</span></div>
 
       <div class="card improvement" id="improvement">
         <canvas id="ring" width="120" height="120" aria-label="Held-out checks passed by the candidate against the current model"></canvas>
@@ -137,13 +137,13 @@
       </div>
 
       <div class="card ladder" id="ladder">
-        <span class="kicker">VERSIONS</span>
+        <span class="machine-label">VERSIONS</span>
         <ol id="rounds"><li class="empty">base model at both sites &middot; nothing has shipped</li></ol>
         <div class="canary"><span id="canary-north"><svg class="icon" aria-hidden="true"><use href="icons.svg#clock"/></svg> north</span><span id="canary-south"><svg class="icon" aria-hidden="true"><use href="icons.svg#clock"/></svg> south</span></div>
       </div>
 
       <div class="card answers" id="comparison">
-        <span class="kicker">SAME HELD-OUT REQUEST</span>
+        <span class="machine-label">SAME HELD-OUT REQUEST</span>
         <p class="prompt said" id="eval-prompt">answers appear after the first gate</p>
         <div class="pair">
           <section><h4 id="before-title">CURRENT</h4><p id="before" class="old said">&ndash;</p></section>
@@ -165,6 +165,14 @@
         <button type="button" id="stage-next" aria-label="Next stage">Next &rarr;</button>
       </nav>
     </div>
+    <ol class="explorer-steps" aria-label="Stage list">
+      <li data-stage-id="collect" aria-current="step">Collect</li>
+      <li data-stage-id="teacher">Teacher</li>
+      <li data-stage-id="review">Review</li>
+      <li data-stage-id="train">Train</li>
+      <li data-stage-id="gate">Gate</li>
+      <li data-stage-id="rollout">Rollout</li>
+    </ol>
     <article class="explorer-card" aria-live="polite">
       <div class="explorer-summary">
         <span id="explorer-number">01</span>
@@ -217,6 +225,24 @@
       <header class="panel-head"><h3>Receipts</h3><span class="hint">local &middot; newest first</span></header>
       <ol class="events" id="events"><li class="empty">awaiting the first receipt</li></ol>
     </div>
+  </section>
+
+  <section class="public-guide" aria-label="Example guide">
+    <article id="explanation">
+      <h2>What this proves</h2>
+      <p>Sites collect conversations, a local teacher grades them, a person keeps the hard corrections, and only a candidate that beats the current model ships back.</p>
+    </article>
+    <article id="run">
+      <h2>Run</h2>
+      <pre><code>npm ci
+just check
+just up</code></pre>
+      <p>Open <code>http://localhost:8024</code>. The presenter starts with all five jobs stopped.</p>
+    </article>
+    <article id="deploy">
+      <h2>Deploy</h2>
+      <p><code>just up</code> deploys the five selector-bound jobs through Expanso Cloud, verifies that each is stopped, then starts the local services. Start the jobs in Cloud when the demonstration begins.</p>
+    </article>
   </section>
 </main>
 <dialog id="batch-review" aria-labelledby="batch-title">

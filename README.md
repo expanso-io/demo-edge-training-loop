@@ -88,6 +88,9 @@ measure general quality, voice quality, or production safety. Teacher confidence
 is self-reported, not calibrated. See [docs/RESEARCH.md](docs/RESEARCH.md) and the
 JSON evidence files for the exact scope.
 
+The current five-job fixture proof is documented in
+[docs/PUBLIC_BAR_PROOF_2026-10-05.md](docs/PUBLIC_BAR_PROOF_2026-10-05.md).
+
 Cloud console Logs and Monitoring need a signed-in manual check before the
 take; the installed CLI log stream fails its WebSocket handshake. This accepted
 preflight warning is detailed in [RECORDING_PREFLIGHT.md](RECORDING_PREFLIGHT.md).
@@ -103,7 +106,7 @@ preflight warning is detailed in [RECORDING_PREFLIGHT.md](RECORDING_PREFLIGHT.md
 - `scripts/runtime.py`: explicit operator lifecycle and archive/reset commands.
 - `dashboard/`: local presenter, fresh read-only Cloud status and human review.
 
-Local operational state and secrets are gitignored. There is no remote repo.
+Local operational state and secrets are gitignored.
 
 The shared `rollout` job selects both `role: site` nodes. Native Edge startup
 sets `TRAIN_LOOP_SITE` and `TRAIN_LOOP_INSTALL_PORT` for each node. Restart

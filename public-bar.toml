@@ -1,0 +1,143 @@
+version = 1
+
+[repository]
+name = "demo-edge-training-loop"
+published = true
+
+[web]
+document = "dashboard/index.html"
+explanation_selector = "#explanation"
+explorer_selector = "#explorer"
+run_selector = "#run"
+deploy_selector = "#deploy"
+
+[browser]
+url = "http://127.0.0.1:8174/"
+ready_url = "http://127.0.0.1:8174/"
+start_command = ["uv", "run", "--no-project", "-s", "scripts/public_bar_server.py", "serve"]
+stop_command = ["uv", "run", "--no-project", "-s", "scripts/public_bar_server.py", "stop"]
+theme_toggle_selector = "#theme-toggle"
+stage_selector = ".explorer-steps [data-stage-id]"
+current_stage_selector = ".explorer-steps [aria-current='step']"
+scroll_anchor_selector = "#explorer"
+json_selectors = ["#explorer-input", "#explorer-output"]
+
+[[browser.controls]]
+id = "copy-stage-input"
+kind = "copy"
+selector = "[data-copy='input']"
+feedback_selector = "#copy-input-result"
+success_text = "Input copied"
+failure_text = "Copy failed"
+
+[[browser.controls]]
+id = "copy-stage-output"
+kind = "copy"
+selector = "[data-copy='output']"
+feedback_selector = "#copy-output-result"
+success_text = "Output copied"
+failure_text = "Copy failed"
+
+[[pipelines]]
+id = "collect-north"
+path = "pipelines/collect-north.yaml"
+input = "fixtures/public-bar/collect.input.jsonl"
+expected = "fixtures/public-bar/collect.expected.jsonl"
+timeout_seconds = 30
+
+[[pipelines]]
+id = "collect-south"
+path = "pipelines/collect-south.yaml"
+input = "fixtures/public-bar/collect.input.jsonl"
+expected = "fixtures/public-bar/collect.expected.jsonl"
+timeout_seconds = 30
+
+[[pipelines]]
+id = "teacher"
+path = "pipelines/teacher.yaml"
+input = "fixtures/public-bar/teacher.input.jsonl"
+expected = "fixtures/public-bar/teacher.expected.jsonl"
+timeout_seconds = 30
+
+[[pipelines]]
+id = "training-trigger"
+path = "pipelines/training-trigger.yaml"
+input = "fixtures/public-bar/training-trigger.input.jsonl"
+expected = "fixtures/public-bar/training-trigger.expected.jsonl"
+timeout_seconds = 30
+
+[[pipelines]]
+id = "rollout"
+path = "pipelines/rollout.yaml"
+input = "fixtures/public-bar/rollout.input.jsonl"
+expected = "fixtures/public-bar/rollout.expected.jsonl"
+timeout_seconds = 30
+
+[[stages]]
+id = "collect-north"
+pipeline = "collect-north"
+selector = "[data-stage-id='collect']"
+input = "fixtures/public-bar/collect.input.jsonl"
+output = "fixtures/public-bar/collect.expected.jsonl"
+
+[[stages]]
+id = "collect-south"
+pipeline = "collect-south"
+selector = "[data-stage-id='collect']"
+input = "fixtures/public-bar/collect.input.jsonl"
+output = "fixtures/public-bar/collect.expected.jsonl"
+
+[[stages]]
+id = "teacher"
+pipeline = "teacher"
+selector = "[data-stage-id='teacher']"
+input = "fixtures/public-bar/teacher.input.jsonl"
+output = "fixtures/public-bar/teacher.expected.jsonl"
+
+[[stages]]
+id = "review"
+pipeline = "teacher"
+selector = "[data-stage-id='review']"
+input = "fixtures/public-bar/teacher.expected.jsonl"
+output = "dashboard/stage-explorer.json"
+
+[[stages]]
+id = "train"
+pipeline = "training-trigger"
+selector = "[data-stage-id='train']"
+input = "fixtures/public-bar/training-trigger.input.jsonl"
+output = "fixtures/public-bar/training-trigger.expected.jsonl"
+
+[[stages]]
+id = "gate"
+pipeline = "training-trigger"
+selector = "[data-stage-id='gate']"
+input = "fixtures/public-bar/training-trigger.expected.jsonl"
+output = "docs/evidence/public-bar-2026-10-05.json"
+
+[[stages]]
+id = "rollout"
+pipeline = "rollout"
+selector = "[data-stage-id='rollout']"
+input = "fixtures/public-bar/rollout.input.jsonl"
+output = "fixtures/public-bar/rollout.expected.jsonl"
+
+[[yaml]]
+path = ".demo.yaml"
+role = "support"
+
+[[yaml]]
+path = "config/north.yaml"
+role = "support"
+
+[[yaml]]
+path = "config/south.yaml"
+role = "support"
+
+[[yaml]]
+path = "config/training.yaml"
+role = "support"
+
+[regressions]
+features = "public-features.json"
+removal_files = ["public-removals/*.json"]

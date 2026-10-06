@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "features": [
+    {"id": "live-loop-board", "description": "Show the two sites, local training node, gate and staged release as one moving loop"},
+    {"id": "cloud-job-status", "description": "Show read-only Expanso Cloud job status without lifecycle controls"},
+    {"id": "conversation-inspector", "description": "Open a retained conversation with assistant, teacher and approved target"},
+    {"id": "round-inspector", "description": "Open a training round with held-out before and after answers"},
+    {"id": "human-review", "description": "Approve, edit, discard and batch-review pending corrections"},
+    {"id": "gate-comparison", "description": "Compare current and candidate scores on the fixed held-out set"},
+    {"id": "staged-rollout", "description": "Show North then South activation receipts and rollback state"},
+    {"id": "stage-explorer", "description": "Page collect, teacher, review, train, gate and rollout with real input and output"},
+    {"id": "collect-north", "description": "Run and inspect North site collection"},
+    {"id": "collect-south", "description": "Run and inspect South site collection"},
+    {"id": "teacher", "description": "Run and inspect the recorded local teacher"},
+    {"id": "review", "description": "Inspect the human review decision"},
+    {"id": "train", "description": "Run and inspect the bounded training trigger"},
+    {"id": "gate", "description": "Inspect the held-out improvement gate"},
+    {"id": "rollout", "description": "Run and inspect staged adapter rollout"},
+    {"id": "light-dark-themes", "description": "Start in light mode and provide an explicit dark toggle"}
+  ],
+  "routes": [
+    {"id": "presenter", "path": "/"},
+    {"id": "presenter-state", "path": "/api/state"}
+  ],
+  "controls": [
+    {"id": "theme-toggle", "selector": "#theme-toggle"},
+    {"id": "previous-stage", "selector": "#stage-previous"},
+    {"id": "next-stage", "selector": "#stage-next"},
+    {"id": "copy-stage-input", "selector": "[data-copy='input']"},
+    {"id": "copy-stage-output", "selector": "[data-copy='output']"},
+    {"id": "approve-correction", "selector": "#approve"},
+    {"id": "discard-correction", "selector": "#discard"},
+    {"id": "inspect-batch", "selector": "#review-batch"}
+  ],
+  "downloads": [],
+  "browser_assertions": [
+    {"id": "stage-arrow-keys", "description": "Left and Right page the explorer without moving its scroll anchor"},
+    {"id": "copy-local-feedback", "description": "Both copy controls report local success and forced failure"},
+    {"id": "wcag-aa-themes", "description": "Visible text meets WCAG AA in light and dark"},
+    {"id": "responsive-widths", "description": "The page has no horizontal overflow at 320, 400, 768 and 1440 pixels"},
+    {"id": "vertical-json", "description": "Explorer input and output are valid pretty-printed JSON"},
+    {"id": "zero-state-motion", "description": "The live topology moves before pipelines start, including reduced motion"}
+  ]
+}

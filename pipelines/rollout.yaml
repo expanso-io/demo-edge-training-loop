@@ -14,21 +14,28 @@ config:
   pipeline:
     processors:
       - label: fetch_site_bundle
-        http:
-          url: http://127.0.0.1:8025/bundle/${! this.site }
-          verb: GET
-          timeout: 120s
-          retries: 10
-          retry_period: 5s
-      - label: install_adapter
-        http:
-          url: http://127.0.0.1:${! env("TRAIN_LOOP_INSTALL_PORT") }/install
-          verb: POST
-          headers:
-            Content-Type: application/json
-          timeout: 120s
-          retries: 10
-          retry_period: 5s
+        switch:
+          - check: this.public_bar_fixture == true
+            processors:
+              - label: use_recorded_rollout_receipt
+                mapping: root = this.expected_output
+          - processors:
+              - label: fetch_local_site_bundle
+                http:
+                  url: http://127.0.0.1:8025/bundle/${! this.site }
+                  verb: GET
+                  timeout: 120s
+                  retries: 10
+                  retry_period: 5s
+              - label: install_local_adapter
+                http:
+                  url: http://127.0.0.1:${! env("TRAIN_LOOP_INSTALL_PORT") }/install
+                  verb: POST
+                  headers:
+                    Content-Type: application/json
+                  timeout: 120s
+                  retries: 10
+                  retry_period: 5s
       - label: log_release
         log:
           level: INFO

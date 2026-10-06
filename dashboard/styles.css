@@ -28,7 +28,7 @@
 
   --bg:        #f3eee6;
   --surface:   #faf7f1;
-  --surface-2: #ffffff;
+  --surface-2: #fffdf9;
   --line:      #d9d0c2;
 
   --text:      #1e1a16;
@@ -77,8 +77,9 @@ h2, h3, h4, p, ol, dl, dd { margin: 0; }
 :focus-visible { outline: 3px solid var(--warn); outline-offset: 3px; }
 [hidden] { display: none !important; }
 
-.kicker { color: var(--accent); font-size: 13px; letter-spacing: .16em; display: block; }
-.kicker.ok { color: var(--ok); }
+.machine-label { color: var(--accent); font-size: 13px; font-weight: 600; letter-spacing: .08em; display: inline; }
+.machine-label.ok { color: var(--ok); }
+.machine-label + h2, .machine-label + h3 { display: inline; margin-left: 6px; }
 .icon { display: inline-block; width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.125em; flex: none; }
 .said { font-family: var(--serif); }
 
@@ -179,7 +180,7 @@ header output[data-state="down"] { color: var(--text-dim); }
 
 /* orchestrator + edge node */
 .orchestrator { text-align: center; border-color: rgba(103, 67, 207, .45); min-height: 112px; }
-.orchestrator .kicker { color: var(--ctl); }
+.orchestrator .machine-label { color: var(--ctl); }
 .edge { border-color: rgba(184, 71, 42, .5); margin-top: 26px; }
 .edge-head { display: flex; align-items: center; gap: 12px; }
 .edge-head h2 { white-space: nowrap; }
@@ -279,6 +280,10 @@ body[data-shipped="true"] .answers { border-color: rgba(15, 122, 99, .55); }
 .explorer-head p, .explorer-help { color: var(--text-dim); font-size: 13px; }
 .explorer-head nav { display: flex; align-items: center; gap: 10px; flex: none; }
 .explorer-head output { min-width: 58px; text-align: center; color: var(--text-dim); font-size: 13px; }
+.explorer-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); list-style: none; margin: 0 0 10px; padding: 0; border: 1px solid var(--line); }
+.explorer-steps li { padding: 6px 8px; text-align: center; color: var(--text-dim); border-right: 1px solid var(--line); font-size: 13px; }
+.explorer-steps li:last-child { border-right: 0; }
+.explorer-steps li[aria-current="step"] { color: var(--surface-2); background: var(--accent); }
 .explorer-card { background: var(--surface-2); border: 1px solid var(--line); padding: 14px; }
 .explorer-summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; margin-bottom: 12px; }
 .explorer-summary > span { color: var(--accent); font-size: 24px; line-height: 1; }
@@ -293,6 +298,12 @@ body[data-shipped="true"] .answers { border-color: rgba(15, 122, 99, .55); }
 .copy-result { min-height: 1.45em; color: var(--ok); font-size: 13px; margin-top: 6px; }
 .copy-result[data-state="error"] { color: var(--err); }
 .explorer-help { margin-top: 8px; }
+
+.public-guide { display: grid; grid-template-columns: 1.2fr .8fr 1fr; gap: 14px; padding: 0 3vw 40px; }
+.public-guide article { min-width: 0; padding: 14px; background: var(--surface-2); border: 1px solid var(--line); }
+.public-guide h2 { margin: 0 0 6px; font-size: 16px; }
+.public-guide p { color: var(--text-dim); font-size: 13px; }
+.public-guide pre { margin: 0 0 8px; padding: 8px; overflow: auto; background: var(--surface); border: 1px solid var(--line); font: 13px/1.5 var(--mono); }
 
 /* ------------------------------------------------------------------ panels */
 .panels { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, .8fr); gap: 14px; padding: 4px 3vw 40px; }
@@ -407,6 +418,7 @@ button:disabled { cursor: wait; opacity: .5; }
   .stage { grid-template-columns: 1fr; }
   .boundary { right: 2vw; }
   .panels { grid-template-columns: 1fr; }
+  .public-guide { grid-template-columns: 1fr; }
   .col-head { height: auto; }
   .boundary { display: none; }
 }
@@ -423,6 +435,9 @@ button:disabled { cursor: wait; opacity: .5; }
   .explorer-head { align-items: stretch; flex-direction: column; }
   .explorer-head nav { justify-content: space-between; }
   .explorer-data { grid-template-columns: 1fr; }
+  .explorer-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .explorer-steps li:nth-child(3) { border-right: 0; }
+  .explorer-steps li:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
   .explorer-data pre { min-height: 150px; }
   .explorer { scroll-margin-top: 270px; }
 }

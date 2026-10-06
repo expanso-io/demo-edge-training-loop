@@ -14,13 +14,20 @@ config:
   pipeline:
     processors:
       - label: trigger_training
-        http:
-          url: http://127.0.0.1:8025/tick
-          verb: POST
-          headers:
-            Content-Type: application/json
-          retries: 10
-          retry_period: 5s
+        switch:
+          - check: this.public_bar_fixture == true
+            processors:
+              - label: use_recorded_training_receipt
+                mapping: root = this.expected_output
+          - processors:
+              - label: call_local_training_service
+                http:
+                  url: http://127.0.0.1:8025/tick
+                  verb: POST
+                  headers:
+                    Content-Type: application/json
+                  retries: 10
+                  retry_period: 5s
       - label: log_training_status
         log:
           level: INFO

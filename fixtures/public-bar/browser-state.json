@@ -1,0 +1,11 @@
+{
+  "selection": {"minimum": 8, "expected": 16},
+  "records": [],
+  "events": [],
+  "mode": "Recorded public example fixtures",
+  "cloud": {"running": 0, "total": 5},
+  "sites": {"north": "base", "south": "base"},
+  "rollback": null,
+  "rounds": [],
+  "training": {"status": "idle"}
+}

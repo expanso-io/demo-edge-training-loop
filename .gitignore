@@ -3,6 +3,7 @@
 *.env
 .envrc
 .runtime/
+artifacts/
 .cloud-state/
 .expanso-edge/
 __pycache__/
