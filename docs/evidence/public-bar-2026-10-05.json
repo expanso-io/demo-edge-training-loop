@@ -1,0 +1,425 @@
+{
+  "proof_date": "2026-10-06",
+  "started_at": "2026-10-06T02:59:25.009482+00:00",
+  "source_commit": "b14ea9e1d42394a49156452dd9cc8e766949de19",
+  "expanso_edge_version": "v2.1.21",
+  "run_id": "public-bar-20261006T025925Z",
+  "jobs_while_running": {
+    "train-loop-rollout": "running",
+    "train-loop-training-trigger": "running",
+    "train-loop-collect-south": "running",
+    "train-loop-collect-north": "running",
+    "train-loop-teacher": "running"
+  },
+  "pipeline_sha256": {
+    "collect-north.yaml": "d3a8c925c3e8028c7faf25215ee256689861b7db57ed6310550f30a50ce3cb5a",
+    "collect-south.yaml": "6c108d6ed348de091cc22da5652553aa4e593bd974bed3ca0c995bb916ee2d8f",
+    "rollout.yaml": "bbd4e770181b26f8fc72e91c0290ff4aa4f324fad89750551bed561602f3625e",
+    "teacher.yaml": "9ecefab132bd3fcb2401ba2474800ff383bfb45f022db514b1060262affd5684",
+    "training-trigger.yaml": "b25ab43eae67062379fd6ee1d131631ebadcd607ceb10567537a68ce8d76da6e"
+  },
+  "assertions": {
+    "records_received": 8,
+    "training_status": "passed",
+    "gate_status": "passed",
+    "baseline_score": 0,
+    "candidate_score": 8,
+    "held_out_total": 8,
+    "north_receipt": "installed",
+    "south_receipt": "installed",
+    "sites": {
+      "north": "v1",
+      "south": "v1"
+    },
+    "receipt_stages": [
+      "collect",
+      "gate",
+      "review",
+      "rollout",
+      "teacher",
+      "training"
+    ]
+  },
+  "state": {
+    "selection": {
+      "minimum": 8,
+      "expected": 16
+    },
+    "records": [
+      {
+        "id": "public-bar-20261006T025925Z-01",
+        "site": "north",
+        "prompt": "I'd like a refund for my parcel.",
+        "answer": "I'm sorry, I cannot help with that request.",
+        "kind": "refund",
+        "version": "base",
+        "status": "approved",
+        "teacher": {
+          "verdict": "fail",
+          "corrected_target": "Please provide your order number so I can check refund eligibility.",
+          "confidence": 0.99,
+          "rationale": "The recorded answer must request the order number first.",
+          "source": "recorded-proof"
+        },
+        "target": "Please provide your order number so I can check refund eligibility.",
+        "reviewed_at": null
+      },
+      {
+        "id": "public-bar-20261006T025925Z-02",
+        "site": "south",
+        "prompt": "Can I get my money back for this order?",
+        "answer": "I'm sorry, I cannot help with that request.",
+        "kind": "refund",
+        "version": "base",
+        "status": "approved",
+        "teacher": {
+          "verdict": "fail",
+          "corrected_target": "Please provide your order number so I can check refund eligibility.",
+          "confidence": 0.99,
+          "rationale": "The recorded answer must request the order number first.",
+          "source": "recorded-proof"
+        },
+        "target": "Please provide your order number so I can check refund eligibility.",
+        "reviewed_at": null
+      },
+      {
+        "id": "public-bar-20261006T025925Z-03",
+        "site": "north",
+        "prompt": "The item arrived broken. Please refund it.",
+        "answer": "I'm sorry, I cannot help with that request.",
+        "kind": "refund",
+        "version": "base",
+        "status": "approved",
+        "teacher": {
+          "verdict": "fail",
+          "corrected_target": "Please provide your order number so I can check refund eligibility.",
+          "confidence": 0.99,
+          "rationale": "The recorded answer must request the order number first.",
+          "source": "recorded-proof"
+        },
+        "target": "Please provide your order number so I can check refund eligibility.",
+        "reviewed_at": null
+      },
+      {
+        "id": "public-bar-20261006T025925Z-04",
+        "site": "south",
+        "prompt": "I bought the wrong size and want a refund.",
+        "answer": "I'm sorry, I cannot help with that request.",
+        "kind": "refund",
+        "version": "base",
+        "status": "approved",
+        "teacher": {
+          "verdict": "fail",
+          "corrected_target": "Please provide your order number so I can check refund eligibility.",
+          "confidence": 0.99,
+          "rationale": "The recorded answer must request the order number first.",
+          "source": "recorded-proof"
+        },
+        "target": "Please provide your order number so I can check refund eligibility.",
+        "reviewed_at": null
+      },
+      {
+        "id": "public-bar-20261006T025925Z-05",
+        "site": "north",
+        "prompt": "Please return the payment for my purchase.",
+        "answer": "I'm sorry, I cannot help with that request.",
+        "kind": "refund",
+        "version": "base",
+        "status": "approved",
+        "teacher": {
+          "verdict": "fail",
+          "corrected_target": "Please provide your order number so I can check refund eligibility.",
+          "confidence": 0.99,
+          "rationale": "The recorded answer must request the order number first.",
+          "source": "recorded-proof"
+        },
+        "target": "Please provide your order number so I can check refund eligibility.",
+        "reviewed_at": null
+      },
+      {
+        "id": "public-bar-20261006T025925Z-06",
+        "site": "south",
+        "prompt": "I no longer need this item. Can you refund me?",
+        "answer": "I'm sorry, I cannot help with that request.",
+        "kind": "refund",
+        "version": "base",
+        "status": "approved",
+        "teacher": {
+          "verdict": "fail",
+          "corrected_target": "Please provide your order number so I can check refund eligibility.",
+          "confidence": 0.99,
+          "rationale": "The recorded answer must request the order number first.",
+          "source": "recorded-proof"
+        },
+        "target": "Please provide your order number so I can check refund eligibility.",
+        "reviewed_at": null
+      },
+      {
+        "id": "public-bar-20261006T025925Z-07",
+        "site": "north",
+        "prompt": "I paid twice for the same parcel. Help me get a refund.",
+        "answer": "I'm sorry, I cannot help with that request.",
+        "kind": "refund",
+        "version": "base",
+        "status": "approved",
+        "teacher": {
+          "verdict": "fail",
+          "corrected_target": "Please provide your order number so I can check refund eligibility.",
+          "confidence": 0.99,
+          "rationale": "The recorded answer must request the order number first.",
+          "source": "recorded-proof"
+        },
+        "target": "Please provide your order number so I can check refund eligibility.",
+        "reviewed_at": null
+      },
+      {
+        "id": "public-bar-20261006T025925Z-08",
+        "site": "south",
+        "prompt": "My purchase never arrived. I want my money back.",
+        "answer": "I'm sorry, I cannot help with that request.",
+        "kind": "refund",
+        "version": "base",
+        "status": "approved",
+        "teacher": {
+          "verdict": "fail",
+          "corrected_target": "Please provide your order number so I can check refund eligibility.",
+          "confidence": 0.99,
+          "rationale": "The recorded answer must request the order number first.",
+          "source": "recorded-proof"
+        },
+        "target": "Please provide your order number so I can check refund eligibility.",
+        "reviewed_at": null
+      }
+    ],
+    "events": [
+      {
+        "seq": 28,
+        "at": 1791255635.3740492,
+        "stage": "rollout",
+        "message": "south activated the checked adapter"
+      },
+      {
+        "seq": 27,
+        "at": 1791255631.3421724,
+        "stage": "rollout",
+        "message": "north activated the checked adapter"
+      },
+      {
+        "seq": 26,
+        "at": 1791255630.3073597,
+        "stage": "gate",
+        "message": "Improved without regression"
+      },
+      {
+        "seq": 25,
+        "at": 1791255630.2983773,
+        "stage": "training",
+        "message": "Approved batch entered local LoRA training"
+      },
+      {
+        "seq": 24,
+        "at": 1791255624.9340854,
+        "stage": "review",
+        "message": "public-bar-20261006T025925Z-08: ready for training"
+      },
+      {
+        "seq": 23,
+        "at": 1791255624.9298418,
+        "stage": "teacher",
+        "message": "Recorded teacher result used for public-bar-20261006T025925Z-08"
+      },
+      {
+        "seq": 22,
+        "at": 1791255624.9281094,
+        "stage": "collect",
+        "message": "Transcript received from south"
+      },
+      {
+        "seq": 21,
+        "at": 1791255624.9118617,
+        "stage": "review",
+        "message": "public-bar-20261006T025925Z-07: ready for training"
+      },
+      {
+        "seq": 20,
+        "at": 1791255624.9067907,
+        "stage": "teacher",
+        "message": "Recorded teacher result used for public-bar-20261006T025925Z-07"
+      },
+      {
+        "seq": 19,
+        "at": 1791255624.9044662,
+        "stage": "collect",
+        "message": "Transcript received from north"
+      },
+      {
+        "seq": 18,
+        "at": 1791255624.8945754,
+        "stage": "review",
+        "message": "public-bar-20261006T025925Z-06: ready for training"
+      },
+      {
+        "seq": 17,
+        "at": 1791255624.8886392,
+        "stage": "teacher",
+        "message": "Recorded teacher result used for public-bar-20261006T025925Z-06"
+      }
+    ],
+    "mode": "Local model preparation",
+    "sites": {
+      "north": "v1",
+      "south": "v1"
+    },
+    "site_checks": {
+      "north": {
+        "status": "installed",
+        "site": "north",
+        "version": "v1",
+        "sha256": "0496dfcfc72004d60923d1a13b58e629e52228504036c8947356654bef9fce0d",
+        "probe": "Please provide your order number so I can check refund eligibility."
+      },
+      "south": {
+        "status": "installed",
+        "site": "south",
+        "version": "v1",
+        "sha256": "0496dfcfc72004d60923d1a13b58e629e52228504036c8947356654bef9fce0d",
+        "probe": "Please provide your order number so I can check refund eligibility."
+      }
+    },
+    "rollback": null,
+    "rounds": [
+      {
+        "version": "v1",
+        "status": "passed",
+        "reason": "Improved without regression",
+        "baseline": {
+          "version": "base",
+          "passed": 0,
+          "total": 8,
+          "outputs": [
+            {
+              "kind": "refund",
+              "prompt": "This delivery is no use to me. May I have a refund?",
+              "answer": "I'm sorry, I cannot help with that request.",
+              "pass": false
+            },
+            {
+              "kind": "refund",
+              "prompt": "I'd appreciate a reimbursement for the faulty kettle.",
+              "answer": "I'm sorry, I cannot help with that request.",
+              "pass": false
+            },
+            {
+              "kind": "refund",
+              "prompt": "The shoes are damaged. Give me the payment back.",
+              "answer": "I'm sorry, I cannot help with that request.",
+              "pass": false
+            },
+            {
+              "kind": "refund",
+              "prompt": "Please undo the charge for the missing package.",
+              "answer": "I'm sorry, I cannot help with that request.",
+              "pass": false
+            },
+            {
+              "kind": "booking",
+              "prompt": "Something has come up; could my visit be on Thursday instead?",
+              "answer": "I'm sorry, I cannot help with that request.",
+              "pass": false
+            },
+            {
+              "kind": "booking",
+              "prompt": "Would you rearrange the time I reserved?",
+              "answer": "I'm sorry, I cannot help with that request.",
+              "pass": false
+            },
+            {
+              "kind": "booking",
+              "prompt": "I need a different day for the appointment I made.",
+              "answer": "I'm sorry, I cannot help with that request.",
+              "pass": false
+            },
+            {
+              "kind": "booking",
+              "prompt": "Can my scheduled visit be brought forward?",
+              "answer": "I'm sorry, I cannot help with that request.",
+              "pass": false
+            }
+          ]
+        },
+        "candidate": {
+          "version": "v1",
+          "passed": 8,
+          "total": 8,
+          "outputs": [
+            {
+              "kind": "refund",
+              "prompt": "This delivery is no use to me. May I have a refund?",
+              "answer": "Please provide your order number so I can check refund eligibility.",
+              "pass": true
+            },
+            {
+              "kind": "refund",
+              "prompt": "I'd appreciate a reimbursement for the faulty kettle.",
+              "answer": "Please provide your order number so I can check refund eligibility.",
+              "pass": true
+            },
+            {
+              "kind": "refund",
+              "prompt": "The shoes are damaged. Give me the payment back.",
+              "answer": "Please provide your order number so I can check refund eligibility.",
+              "pass": true
+            },
+            {
+              "kind": "refund",
+              "prompt": "Please undo the charge for the missing package.",
+              "answer": "Please provide your order number so I can check refund eligibility.",
+              "pass": true
+            },
+            {
+              "kind": "booking",
+              "prompt": "Something has come up; could my visit be on Thursday instead?",
+              "answer": "Please provide your booking reference before I check availability.",
+              "pass": true
+            },
+            {
+              "kind": "booking",
+              "prompt": "Would you rearrange the time I reserved?",
+              "answer": "Please provide your booking reference before I check availability.",
+              "pass": true
+            },
+            {
+              "kind": "booking",
+              "prompt": "I need a different day for the appointment I made.",
+              "answer": "Please provide your booking reference before I check availability.",
+              "pass": true
+            },
+            {
+              "kind": "booking",
+              "prompt": "Can my scheduled visit be brought forward?",
+              "answer": "Please provide your booking reference before I check availability.",
+              "pass": true
+            }
+          ]
+        },
+        "sha256": "0496dfcfc72004d60923d1a13b58e629e52228504036c8947356654bef9fce0d",
+        "seconds": 0.006,
+        "training_ids": [
+          "public-bar-20261006T025925Z-01",
+          "public-bar-20261006T025925Z-02",
+          "public-bar-20261006T025925Z-03",
+          "public-bar-20261006T025925Z-04",
+          "public-bar-20261006T025925Z-05",
+          "public-bar-20261006T025925Z-06",
+          "public-bar-20261006T025925Z-07",
+          "public-bar-20261006T025925Z-08"
+        ],
+        "held_out_sha256": "3512dcbaa165deaf50b357efdcf65a0a27617aa5d0b20747b1b15c4f363096c1"
+      }
+    ],
+    "training": {
+      "status": "passed",
+      "version": "v1"
+    }
+  }
+}
