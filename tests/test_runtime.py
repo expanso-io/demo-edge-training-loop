@@ -15,6 +15,18 @@ SCRATCH.mkdir(parents=True, exist_ok=True)
 
 
 class ShutdownTests(unittest.TestCase):
+    def test_zombie_pid_is_finished_not_an_identity_mismatch(self):
+        with tempfile.TemporaryDirectory(dir=SCRATCH) as directory:
+            pidfile = Path(directory) / 'edge.pid'
+            pidfile.write_text('1234')
+            result = type('Result', (), {
+                'returncode': 0,
+                'stdout': 'Z    expanso-edge <defunct>\n',
+            })()
+            with patch.object(runtime.subprocess, 'run', return_value=result):
+                self.assertFalse(runtime.alive(pidfile))
+            self.assertFalse(pidfile.exists())
+
     def test_pid_is_retained_until_process_exits(self):
         with tempfile.TemporaryDirectory(dir=SCRATCH) as directory:
             root = Path(directory)

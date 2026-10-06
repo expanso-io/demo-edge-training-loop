@@ -36,11 +36,16 @@ def alive(pidfile):
     if not pidfile.exists():
         return False
     pid = int(pidfile.read_text())
-    result = subprocess.run(['ps', '-p', str(pid), '-o', 'command='], capture_output=True, text=True)
+    result = subprocess.run(['ps', '-p', str(pid), '-o', 'state=,command='],
+                            capture_output=True, text=True)
     if result.returncode:
         pidfile.unlink()
         return False
-    if str(ROOT) not in result.stdout:
+    state, _, command = result.stdout.strip().partition(' ')
+    if state.startswith('Z'):
+        pidfile.unlink()
+        return False
+    if str(ROOT) not in command:
         raise RuntimeError(f'Process identity mismatch: {pidfile.name}')
     return True
 
