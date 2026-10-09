@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import runtime
+from port_assignments import service_port
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -32,7 +33,7 @@ def wait_until(label, predicate, timeout=300):
 
 def state():
     try:
-        with urllib.request.urlopen('http://127.0.0.1:8025/state', timeout=3) as response:
+        with urllib.request.urlopen(f'http://127.0.0.1:{service_port(8025)}/state', timeout=3) as response:
             return json.load(response)
     except OSError:
         return None
@@ -83,8 +84,8 @@ def run_proof(output):
         for name in runtime.JOBS:
             runtime.cloud('job', 'rerun', name)
         running = wait_until('five Cloud jobs to run', all_jobs_running)
-        wait_until('North collection input', lambda: port_ready(18101), timeout=120)
-        wait_until('South collection input', lambda: port_ready(18102), timeout=120)
+        wait_until('North collection input', lambda: port_ready(service_port(18101)), timeout=120)
+        wait_until('South collection input', lambda: port_ready(service_port(18102)), timeout=120)
         subprocess.run([
             'uv', 'run', '-s', str(ROOT / 'scripts' / 'producer.py'),
             '--count', '8', '--run', run_id,
