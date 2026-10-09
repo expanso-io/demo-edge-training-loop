@@ -4,6 +4,7 @@
 # ///
 """Local presenter proxy. This surface cannot change Cloud job lifecycle."""
 import argparse
+from port_assignments import service_port
 import json
 import threading
 import time
@@ -18,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DASHBOARD = ROOT / 'dashboard'
-BACKEND = 'http://127.0.0.1:8025'
+BACKEND = f'http://127.0.0.1:{service_port(8025)}'
 CLOUD = {'checked': 0, 'mode': 'Cloud status awaiting verification', 'running': 0, 'total': 0}
 JOBS = {f'train-loop-{path.stem}' for path in (ROOT / 'pipelines').glob('*.yaml')}
 
@@ -97,7 +98,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=8024)
+    parser.add_argument('--port', type=int, default=service_port(8024))
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
     if args.check:

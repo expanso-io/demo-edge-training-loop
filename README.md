@@ -124,3 +124,7 @@ The selected-correction exercise uses a representative minimum of eight
 approved corrections. This is a demo batching setting, not a validated
 production sample-size recommendation. The original measured run in
 `docs/RESEARCH.md` remains unchanged.
+
+### Sticky localhost ports
+
+`ports.json` declares nine host services. `just up` allocates them once; `just down` and runtime resets preserve the presenter URL. `just ports` displays saved assignments. Docker publishes the allocated host bindings while preserving internal container ports. Site Cloud definitions use the host assignments; training jobs retain container network addresses. Saved-port collisions refuse startup rather than moving bookmarks.
