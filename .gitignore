@@ -22,3 +22,6 @@ node_modules/
 *.key
 state/
 .DS_Store
+
+.demo-port-state.json
+.demo-port-state.json.lock

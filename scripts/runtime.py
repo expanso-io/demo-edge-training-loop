@@ -14,8 +14,9 @@ import urllib.request
 from pathlib import Path
 
 from cloud import ROOT, environment
+from port_assignments import service_port, mapped_url
 
-sys.path.insert(0, str(ROOT.parent / '_demo-kit'))
+sys.path.insert(0, os.environ.get('DEMO_KIT', str(ROOT.parent / '_demo-kit')))
 from startup import run_startup
 
 RUNTIME = ROOT / '.runtime'
@@ -64,7 +65,7 @@ def wait_http(port):
     deadline = time.monotonic() + 90
     while time.monotonic() < deadline:
         try:
-            with urllib.request.urlopen(f'http://127.0.0.1:{port}/' + ('api/state' if port == 8024 else 'state'), timeout=2) as response:
+            with urllib.request.urlopen(f'http://127.0.0.1:{service_port(port)}/' + ('api/state' if port == 8024 else 'state'), timeout=2) as response:
                 return json.load(response)
         except OSError:
             time.sleep(1)
@@ -79,10 +80,10 @@ def start_edges():
             run(['expanso-edge', 'bootstrap', '--data-dir', str(directory)], env=environment(), capture_output=True)
         site_env = environment()
         site_env['TRAIN_LOOP_SITE'] = name
-        site_env['TRAIN_LOOP_INSTALL_PORT'] = '8026' if name == 'north' else '8027'
+        site_env['TRAIN_LOOP_INSTALL_PORT'] = str(service_port(8026 if name == 'north' else 8027))
         spawn(f'edge-{name}', ['expanso-edge', 'run', '--config', str(ROOT / 'config' / f'{name}.yaml'),
                              '--data-dir', str(directory), '--name', f'train-loop-{name}',
-                             '--api-listen', f'127.0.0.1:{port}', '--no-watch'], site_env)
+                             '--api-listen', f'127.0.0.1:{service_port(port)}', '--no-watch'], site_env)
     directory = ROOT / '.expanso-edge' / 'training'
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     if not (directory / 'identity').exists():
@@ -115,25 +116,37 @@ def start_services(fixture=False, simulator=True):
         directory = RUNTIME / state
         directory.mkdir(mode=0o700, exist_ok=True)
         args = ['docker', 'run', '-d', '--name', f'train-loop-{role}', '--label', 'demo=demo-edge-training-loop',
-                '-p', f'127.0.0.1:{port}:8025', '-v', f'{directory}:/state',
+                '-p', f'127.0.0.1:{service_port(port)}:8025', '-v', f'{directory}:/state',
                 '-v', f'{ROOT / ".models"}:/state/models', '-e', 'TRAIN_STATE=/state', '-e', f'TRAIN_ROLE={role}']
         if fixture:
             args += ['-e', 'TRAIN_LOOP_FIXTURE=1']
         if role == 'training':
-            args += ['-p', '127.0.0.1:18110:18110']
+            args += ['-p', f'127.0.0.1:{service_port(18110)}:18110']
         run(args + ['train-loop-local'])
         wait_http(port)
     start_edges()
-    spawn('dashboard', ['uv', 'run', '-s', str(ROOT / 'scripts/dashboard.py'), '--port', '8024'])
+    spawn('dashboard', ['uv', 'run', '-s', str(ROOT / 'scripts/dashboard.py'), '--port', str(service_port(8024))])
     wait_http(8024)
     if simulator:
         spawn('simulator', ['uv', 'run', '-s', str(ROOT / 'scripts/producer.py'), '--continuous'])
     mode = 'recorded proof fixtures' if fixture else 'conversation simulator'
-    print(f'Local services and {mode} ready at http://localhost:8024.')
+    print(f'Local services and {mode} ready at http://localhost:{service_port(8024)}.')
 
 
 def up():
     run_startup(ROOT, stop=stop, reset=reset, start=start_services, deploy=deploy)
+
+
+def rendered_pipeline(source):
+    # Site jobs execute on the host. Training jobs share the training container
+    # network and must keep its internal 8025/18110 service addresses.
+    text = source.read_text()
+    if source.stem in ('collect-north', 'collect-south', 'rollout'):
+        text = mapped_url(text)
+    target = RUNTIME / 'jobs' / source.name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text)
+    return target
 
 
 def deploy():
@@ -146,7 +159,8 @@ def deploy():
         if time.monotonic() >= deadline:
             raise RuntimeError(f'Deploy requires demo nodes offline; still online: {online}')
         time.sleep(1)
-    for path in sorted((ROOT / 'pipelines').glob('*.yaml')):
+    for source in sorted((ROOT / 'pipelines').glob('*.yaml')):
+        path = rendered_pipeline(source)
         result = subprocess.run(['expanso-cli', 'job', 'deploy', str(path)],
                                 env=environment(), capture_output=True, text=True, cwd=ROOT)
         if result.returncode and 'NO_CHANGES_DETECTED' not in result.stderr:
@@ -222,7 +236,7 @@ def reset():
 
 
 def action(name):
-    request = urllib.request.Request('http://127.0.0.1:8025/' + name,
+    request = urllib.request.Request(f'http://127.0.0.1:{service_port(8025)}/' + name,
                                      data=b'{}', headers={'Content-Type': 'application/json'})
     with urllib.request.urlopen(request, timeout=10) as response:
         print(response.read().decode())

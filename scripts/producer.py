@@ -4,6 +4,7 @@
 # ///
 """External conversation producer: inference, then a real Expanso input."""
 import argparse
+from port_assignments import service_port
 import json
 import math
 import time
@@ -47,8 +48,8 @@ def main():
         if args.continuous and index == 1:
             kind, prompt = 'refund', 'What will the weather be tomorrow?'
         site = 'north' if index % 2 == 0 else 'south'
-        model_port = 8026 if site == 'north' else 8027
-        pipeline_port = 18101 if site == 'north' else 18102
+        model_port = service_port(8026 if site == 'north' else 8027)
+        pipeline_port = service_port(18101 if site == 'north' else 18102)
         record_id = f'{run_id}-{index + 1:06}' if args.continuous else f'{run_id}-{index + 1:02}'
         try:
             if record is None:
