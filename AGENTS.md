@@ -1,7 +1,10 @@
 # demo-edge-training-loop — agent rules
 
-The rules in `../AGENTS.md` govern this directory; this file only adds to
-them. Build order: claim → beat script → components on the showcase →
+Read [DEMO_INVARIANTS.md](DEMO_INVARIANTS.md) before acting. The vendored
+file carries the rules that must hold in every checkout and worktree.
+When this repository sits under `projects/demos`, `../AGENTS.md` applies
+additionally. In that workspace, consult `../demo-guidance/README.md`
+for recording, video review and publishing. Build order: claim → beat script → components on the showcase →
 port the winners here → `just check`.
 
 - The claim: **Train where the data lives: the sites collect, a local teacher grades, people approve the hard calls, and only a model that beats the last one ships back** — every element on screen serves it or gets cut.
@@ -12,7 +15,7 @@ port the winners here → `just check`.
   vendored serif. The previous dark board was Space Force with the labels
   swapped and was rejected for it. Take a reference board's *behaviour* (drawn
   scenario, one colour per meaning, instruments, click-to-inspect), never its
-  palette or glyphs (`../AGENTS.md` → Theme). If this demo should be the other
+  palette or glyphs (`DEMO_INVARIANTS.md`, Layout). If this demo should be the other
   one, re-stamp with `--palette` rather than hand-flipping colours; the linter
   checks the ground agrees with the declaration.
 - Design language: `../_demo-kit/DESIGN_SYSTEM.md`. Re-hue the tokens for this
